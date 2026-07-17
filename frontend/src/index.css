@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body { @apply bg-ink text-slate-200 antialiased; }
+html:not(.dark) body { @apply bg-slate-100 text-slate-800; }
+
+.panel { @apply bg-panel border border-panelEdge rounded-lg; }
+html:not(.dark) .panel { @apply bg-white border-slate-200 shadow-sm; }
+
+.figure { @apply font-mono text-amber; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { @apply bg-panelEdge rounded; }

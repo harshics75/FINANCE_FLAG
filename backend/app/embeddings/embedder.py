@@ -1,0 +1,26 @@
+"""Azure OpenAI embeddings (text-embedding-3-large)."""
+from openai import AzureOpenAI
+
+from app.config.settings import get_settings
+
+settings = get_settings()
+
+
+def _client() -> AzureOpenAI:
+    return AzureOpenAI(
+        azure_endpoint=settings.azure_openai_endpoint,
+        api_key=settings.azure_openai_api_key,
+        api_version=settings.azure_openai_api_version,
+    )
+
+
+def embed_texts(texts: list[str]) -> list[list[float]]:
+    if not texts:
+        return []
+    client = _client()
+    out: list[list[float]] = []
+    for i in range(0, len(texts), 64):  # batch to stay under token limits
+        resp = client.embeddings.create(model=settings.azure_openai_embedding_deployment,
+                                        input=texts[i:i + 64])
+        out.extend(d.embedding for d in resp.data)
+    return out
