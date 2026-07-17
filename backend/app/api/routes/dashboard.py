@@ -8,7 +8,7 @@ from app.schemas.schemas import DashboardOut
 
 router = APIRouter()
 
-PAGES = {"executive", "performance", "cash_flow", "working_capital", "insights", "audit"}
+PAGES = {"executive", "performance", "cash_flow", "working_capital", "insights", "audit", "operational"}
 
 
 @router.get("/{page}", response_model=DashboardOut, dependencies=[Depends(require_any)])

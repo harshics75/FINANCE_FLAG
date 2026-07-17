@@ -64,7 +64,7 @@ Return JSON:
 }}"""
 
 EXECUTIVE_SUMMARY = """Write a management-friendly executive summary of the company's financial position.
-Audience: board members and CXOs. Plain business language, no jargon. 
+Audience: board members and CXOs. Plain business language, no jargon.
 
 Analyst findings:
 {analyst}
@@ -82,7 +82,26 @@ Return JSON:
   "summary": string (3-5 short paragraphs),
   "key_highlights": [string],
   "top_opportunities": [string],
-  "top_risks": [string]
+  "top_risks": [string],
+  "green_flags": [string] (exactly the 3 strongest positive indicators, most important first; empty strings if fewer than 3 are supported by the data),
+  "red_flags": [string] (exactly the 3 most concerning negative indicators, most important first; empty strings if fewer than 3 are supported by the data),
+  "critical_insights": [string] (exactly 5 critical business insights a board member must know, ordered by importance)
+}}"""
+
+OPERATIONAL_HIGHLIGHTS = """Extract the most important operational updates from the monthly MIS report context below,
+for a management audience. Only report what is explicitly stated in the context — never infer or invent figures.
+If a category is not mentioned in the context, return an empty value for it rather than guessing.
+
+Monthly MIS document context:
+{context}
+
+Return JSON:
+{{
+  "order_book": string (order book / pipeline position; empty string if not mentioned),
+  "major_projects": [string] (ongoing or major projects mentioned),
+  "production_status": string (production/operational status; empty string if not mentioned),
+  "legal_compliance": [string] (legal or compliance matters mentioned),
+  "exceptional_events": [string] (any exceptional business events requiring management attention)
 }}"""
 
 RECOMMENDATION = """Based on the full analysis below, recommend concrete actions to improve business performance.

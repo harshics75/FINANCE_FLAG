@@ -3,6 +3,8 @@ from dataclasses import dataclass, field
 
 import pandas as pd
 
+from app.parser.line_items import extract_line_items
+
 
 @dataclass
 class ParsedSheet:
@@ -19,21 +21,7 @@ def parse_excel(path: str) -> list[ParsedSheet]:
         if df.empty:
             continue
         md = df.head(200).to_markdown(index=False)
-        line_items = _extract_line_items(df)
+        rows = [[None if pd.isna(cell) else cell for cell in row] for row in df.itertuples(index=False)]
+        line_items = extract_line_items(rows)
         sheets.append(ParsedSheet(name=name, markdown=md, line_items=line_items))
     return sheets
-
-
-def _extract_line_items(df: pd.DataFrame) -> dict[str, float]:
-    """Heuristic: first text cell in a row is the label, last numeric cell is the value."""
-    items: dict[str, float] = {}
-    for _, row in df.iterrows():
-        label, value = None, None
-        for cell in row:
-            if label is None and isinstance(cell, str) and cell.strip():
-                label = cell.strip().lower()
-            if isinstance(cell, (int, float)) and not pd.isna(cell):
-                value = float(cell)
-        if label and value is not None:
-            items[label] = value
-    return items

@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
-  Activity, Banknote, FileSearch, LayoutDashboard, LineChart, LogOut,
+  Activity, Banknote, ClipboardList, FileSearch, LayoutDashboard, LineChart, LogOut,
   MessageSquareText, Moon, ShieldAlert, Sparkles, Sun, UploadCloud, Wallet,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
@@ -12,6 +12,7 @@ const NAV = [
   { to: "/cash-flow", label: "Cash Flow", icon: Banknote },
   { to: "/working-capital", label: "Working Capital", icon: Wallet },
   { to: "/insights", label: "AI Insights", icon: Sparkles },
+  { to: "/operational", label: "Operational Highlights", icon: ClipboardList },
   { to: "/documents", label: "Document Explorer", icon: FileSearch },
   { to: "/audit", label: "Audit Findings", icon: ShieldAlert },
   { to: "/chat", label: "Chat with Reports", icon: MessageSquareText },

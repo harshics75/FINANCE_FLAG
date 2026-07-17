@@ -59,7 +59,8 @@ class MetricRepository:
         )
         if existing:
             existing.value = metric.value
-            existing.unit = metric.unit
+            if metric.unit is not None:
+                existing.unit = metric.unit
             existing.source = metric.source
         else:
             self.db.add(metric)

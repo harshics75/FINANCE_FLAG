@@ -40,6 +40,7 @@ def execute_analysis_run(run_id: str) -> None:
             "market_comparison": state.get("market", {}),
             "executive_summary": state.get("summary", {}),
             "recommendation": state.get("recommendations", {}),
+            "operational_highlights": state.get("operational", {}),
         }
         for agent, result in agent_outputs.items():
             db.add(AnalysisResult(run_id=run_id, agent=agent, result=result))
@@ -58,6 +59,8 @@ def _materialize_dashboards(db, periods: dict, agents: dict) -> None:
     latest = list(periods.values())[-1] if periods else {}
     summary = agents.get("executive_summary", {})
     risks = agents.get("risk_detection", {})
+    analyst = agents.get("financial_analyst", {})
+    operational = agents.get("operational_highlights", {})
 
     repo.save("executive", {
         "business_health_score": summary.get("business_health_score"),
@@ -68,6 +71,8 @@ def _materialize_dashboards(db, periods: dict, agents: dict) -> None:
                  ("revenue", "net_profit", "cash", "working_capital", "ebitda")},
         "revenue_series": _series(periods, "revenue"),
         "profit_series": _series(periods, "net_profit"),
+        "green_flags": summary.get("green_flags", []),
+        "red_flags": summary.get("red_flags", []),
     })
     repo.save("performance", {
         "revenue_series": _series(periods, "revenue"),
@@ -75,7 +80,8 @@ def _materialize_dashboards(db, periods: dict, agents: dict) -> None:
         "ebitda_series": _series(periods, "ebitda"),
         "gross_margin_series": _series(periods, "gross_margin_pct"),
         "net_margin_series": _series(periods, "net_margin_pct"),
-        "period_over_period": agents.get("financial_analyst", {}).get("period_over_period", []),
+        "operating_margin_series": _series(periods, "operating_margin_pct"),
+        "period_over_period": analyst.get("period_over_period", []),
     })
     repo.save("cash_flow", {
         "operating": _series(periods, "operating_cash_flow"),
@@ -83,6 +89,9 @@ def _materialize_dashboards(db, periods: dict, agents: dict) -> None:
         "financing": _series(periods, "financing_cash_flow"),
         "cash": _series(periods, "cash"),
         "current_ratio": _series(periods, "current_ratio"),
+        "quick_ratio": _series(periods, "quick_ratio"),
+        "debt_to_equity": _series(periods, "debt_to_equity"),
+        "summary": analyst.get("cash_flow_summary", ""),
     })
     repo.save("working_capital", {
         "receivables": _series(periods, "receivables"),
@@ -91,14 +100,25 @@ def _materialize_dashboards(db, periods: dict, agents: dict) -> None:
         "dso": _series(periods, "dso_days"),
         "dpo": _series(periods, "dpo_days"),
         "ccc": _series(periods, "cash_conversion_cycle_days"),
+        "summary": analyst.get("working_capital_summary", ""),
     })
     repo.save("insights", {
         "top_opportunities": summary.get("top_opportunities", []),
         "top_risks": summary.get("top_risks", []),
         "key_highlights": summary.get("key_highlights", []),
+        "green_flags": summary.get("green_flags", []),
+        "red_flags": summary.get("red_flags", []),
+        "critical_insights": summary.get("critical_insights", []),
         "recommendations": agents.get("recommendation", {}).get("recommendations", []),
     })
     repo.save("audit", {
         "risks": [r for r in risks.get("risks", []) if r.get("category") in ("compliance", "audit")],
         "audit_observations": risks.get("audit_observations", []),
+    })
+    repo.save("operational", {
+        "order_book": operational.get("order_book", ""),
+        "major_projects": operational.get("major_projects", []),
+        "production_status": operational.get("production_status", ""),
+        "legal_compliance": operational.get("legal_compliance", []),
+        "exceptional_events": operational.get("exceptional_events", []),
     })

@@ -8,6 +8,7 @@ from app.config.settings import get_settings
 from app.database.session import SessionLocal
 from app.models.models import Chunk, DocStatus, Document, Embedding, FinancialMetric
 from app.parser.excel_parser import parse_excel
+from app.parser.line_items import extract_line_items
 from app.parser.pdf_parser import parse_pdf, table_to_markdown
 from app.rag.chunker import ChunkPayload, chunk_table, chunk_text
 from app.rag.pipeline import index_chunks
@@ -52,6 +53,7 @@ def process_document(document_id: str) -> None:
                     payloads.extend(chunk_text(page.text, page.page_number))
                     for table in page.tables:
                         payloads.append(chunk_table(table_to_markdown(table), page.page_number))
+                        line_items.update(extract_line_items(table))
             else:
                 for sheet in parse_excel(doc.storage_path):
                     payloads.append(chunk_table(sheet.markdown, 0, sheet=sheet.name))
@@ -82,6 +84,7 @@ def process_document(document_id: str) -> None:
                                                 metric_name=name, value=value, source="parser"))
 
             doc.status = DocStatus.embedded
+            doc.error = ""
             db.commit()
             logger.info("Document %s processed: %d chunks", doc.id, len(chunks))
         except Exception as exc:

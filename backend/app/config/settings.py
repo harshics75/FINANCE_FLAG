@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     azure_openai_chat_deployment: str = "gpt-4o"
     azure_openai_embedding_deployment: str = "text-embedding-3-large"
 
+    llm_provider: str = "azure"  # azure | ollama
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_chat_model: str = "mistral:7b-instruct-q4_0"
+    ollama_embedding_model: str = "nomic-embed-text"
+
     vector_store: str = "faiss"  # azure_search | faiss
     azure_search_endpoint: str = ""
     azure_search_api_key: str = ""
@@ -33,6 +38,10 @@ class Settings(BaseSettings):
     @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+
+    @property
+    def embedding_dim(self) -> int:
+        return 768 if self.llm_provider == "ollama" else 3072
 
 
 @lru_cache

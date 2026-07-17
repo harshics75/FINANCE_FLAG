@@ -25,6 +25,8 @@ class AnalysisState(TypedDict, total=False):
     market: dict
     summary: dict
     recommendations: dict
+    mis_context: str
+    operational: dict
 
 
 def _metrics_str(state: AnalysisState) -> str:
@@ -70,22 +72,41 @@ def node_recommendation(state: AnalysisState) -> AnalysisState:
     return {"recommendations": result}
 
 
+def node_mis_context(state: AnalysisState) -> AnalysisState:
+    chunks = retrieve(
+        "order book production status major projects legal compliance exceptional events cost overrun delay",
+        k=10, filters={"doc_type": "monthly_mis"})
+    return {"mis_context": build_context(chunks)}
+
+
+def node_operational_highlights(state: AnalysisState) -> AnalysisState:
+    mis_context = state.get("mis_context", "")
+    if not mis_context.strip():
+        return {"operational": {}}
+    result = run_json(T.SYSTEM_BASE, T.OPERATIONAL_HIGHLIGHTS.format(context=mis_context))
+    return {"operational": result}
+
+
 def build_graph():
     g = StateGraph(AnalysisState)
-    g.add_node("context", node_context)
+    g.add_node("retrieve_context", node_context)
     g.add_node("financial_analyst", node_financial_analyst)
     g.add_node("risk_detection", node_risk_detection)
     g.add_node("market_comparison", node_market_comparison)
     g.add_node("executive_summary", node_executive_summary)
     g.add_node("recommendation", node_recommendation)
+    g.add_node("retrieve_mis_context", node_mis_context)
+    g.add_node("operational_highlights", node_operational_highlights)
 
-    g.set_entry_point("context")
-    g.add_edge("context", "financial_analyst")
+    g.set_entry_point("retrieve_context")
+    g.add_edge("retrieve_context", "financial_analyst")
     g.add_edge("financial_analyst", "risk_detection")
     g.add_edge("risk_detection", "market_comparison")
     g.add_edge("market_comparison", "executive_summary")
     g.add_edge("executive_summary", "recommendation")
-    g.add_edge("recommendation", END)
+    g.add_edge("recommendation", "retrieve_mis_context")
+    g.add_edge("retrieve_mis_context", "operational_highlights")
+    g.add_edge("operational_highlights", END)
     return g.compile()
 
 

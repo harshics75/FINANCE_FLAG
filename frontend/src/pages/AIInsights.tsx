@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Lightbulb, ShieldAlert, Sparkles, Target } from "lucide-react";
+import { CircleCheck, CircleX, Lightbulb, ShieldAlert, Sparkles, Target } from "lucide-react";
 import api from "../services/api";
 import { DashboardSkeleton } from "../components/ui/Skeleton";
 import { useDashboard } from "../hooks/useDashboard";
@@ -40,6 +40,9 @@ export default function AIInsights() {
 
   if (isLoading) return <DashboardSkeleton />;
   const p = data?.payload ?? {};
+  const greenFlags: string[] = (p.green_flags ?? []).filter(Boolean);
+  const redFlags: string[] = (p.red_flags ?? []).filter(Boolean);
+  const criticalInsights: string[] = (p.critical_insights ?? []).filter(Boolean);
 
   return (
     <div className="space-y-4">
@@ -50,10 +53,16 @@ export default function AIInsights() {
           {run.isPending ? "Running analysis…" : "Run analysis"}
         </button>
       </header>
+
+      <div className="grid md:grid-cols-3 gap-4">
+        <List title="Top 3 Green Flags" icon={CircleCheck} items={greenFlags} tone="text-up" />
+        <List title="Top 3 Red Flags" icon={CircleX} items={redFlags} tone="text-down" />
+        <List title="5 Critical Business Insights" icon={Sparkles} items={criticalInsights} tone="text-amber" />
+      </div>
+
       <div className="grid md:grid-cols-2 gap-4">
         <List title="Top Opportunities" icon={Target} items={p.top_opportunities ?? []} tone="text-up" />
         <List title="Top Risks" icon={ShieldAlert} items={p.top_risks ?? []} tone="text-down" />
-        <List title="Key Highlights" icon={Sparkles} items={p.key_highlights ?? []} tone="text-amber" />
         <List title="Recommended Actions" icon={Lightbulb} items={p.recommendations ?? []} tone="text-amber" />
       </div>
     </div>

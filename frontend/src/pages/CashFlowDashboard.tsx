@@ -21,10 +21,22 @@ export default function CashFlowDashboard() {
         <ChartPanel title="Cash Position">
           <MultiLine kind="area" series={[{ name: "Cash", data: p.cash ?? [] }]} />
         </ChartPanel>
-        <ChartPanel title="Liquidity (Current Ratio)">
-          <MultiLine series={[{ name: "Current Ratio", data: p.current_ratio ?? [] }]} />
+        <ChartPanel title="Liquidity (Current vs Quick Ratio)">
+          <MultiLine series={[
+            { name: "Current Ratio", data: p.current_ratio ?? [] },
+            { name: "Quick Ratio", data: p.quick_ratio ?? [] },
+          ]} />
+        </ChartPanel>
+        <ChartPanel title="Debt to Equity">
+          <MultiLine kind="bar" series={[{ name: "Debt to Equity", data: p.debt_to_equity ?? [] }]} />
         </ChartPanel>
       </div>
+      {p.summary && (
+        <div className="panel p-5">
+          <h3 className="text-xs uppercase tracking-widest text-mute mb-3">Cash Flow &amp; Liquidity Analysis</h3>
+          <p className="text-sm leading-relaxed whitespace-pre-line">{p.summary}</p>
+        </div>
+      )}
     </div>
   );
 }

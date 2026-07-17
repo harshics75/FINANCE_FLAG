@@ -28,6 +28,12 @@ export default function WorkingCapital() {
           <MultiLine kind="area" series={[{ name: "CCC", data: p.ccc ?? [] }]} />
         </ChartPanel>
       </div>
+      {p.summary && (
+        <div className="panel p-5">
+          <h3 className="text-xs uppercase tracking-widest text-mute mb-3">Working Capital Analysis</h3>
+          <p className="text-sm leading-relaxed whitespace-pre-line">{p.summary}</p>
+        </div>
+      )}
     </div>
   );
 }

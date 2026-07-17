@@ -25,6 +25,7 @@ export default function FinancialPerformance() {
         <ChartPanel title="Margins (%)">
           <MultiLine series={[
             { name: "Gross Margin", data: p.gross_margin_series ?? [] },
+            { name: "Operating Margin", data: p.operating_margin_series ?? [] },
             { name: "Net Margin", data: p.net_margin_series ?? [] },
           ]} />
         </ChartPanel>

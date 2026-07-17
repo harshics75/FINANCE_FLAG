@@ -22,10 +22,10 @@ class VectorStore(ABC):
 class FaissStore(VectorStore):
     """Local FAISS index persisted to disk; payloads stored in a sidecar JSON file."""
 
-    def __init__(self, dim: int = 3072, path: str = "/data/uploads/faiss"):
+    def __init__(self, dim: int | None = None, path: str = "/data/uploads/faiss"):
         import faiss
         self._faiss = faiss
-        self.dim = dim
+        self.dim = dim if dim is not None else settings.embedding_dim
         self.path = path
         self.lock = threading.Lock()
         os.makedirs(path, exist_ok=True)
@@ -36,7 +36,7 @@ class FaissStore(VectorStore):
             with open(self.meta_file) as f:
                 self.meta: list[dict] = json.load(f)
         else:
-            self.index = faiss.IndexFlatIP(dim)
+            self.index = faiss.IndexFlatIP(self.dim)
             self.meta = []
 
     def upsert(self, ids, vectors, payloads):

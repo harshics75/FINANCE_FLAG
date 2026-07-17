@@ -7,6 +7,7 @@ import FinancialPerformance from "./pages/FinancialPerformance";
 import CashFlowDashboard from "./pages/CashFlowDashboard";
 import WorkingCapital from "./pages/WorkingCapital";
 import AIInsights from "./pages/AIInsights";
+import OperationalHighlights from "./pages/OperationalHighlights";
 import DocumentExplorer from "./pages/DocumentExplorer";
 import AuditFindings from "./pages/AuditFindings";
 import Chat from "./pages/Chat";
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="/cash-flow" element={<CashFlowDashboard />} />
         <Route path="/working-capital" element={<WorkingCapital />} />
         <Route path="/insights" element={<AIInsights />} />
+        <Route path="/operational" element={<OperationalHighlights />} />
         <Route path="/documents" element={<DocumentExplorer />} />
         <Route path="/audit" element={<AuditFindings />} />
         <Route path="/chat" element={<Chat />} />
