@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, documents, analysis, dashboard, chat, export
+from app.api.routes import auth, documents, analysis, dashboard, chat, export, market, system
 from app.config.settings import get_settings
 from app.database.session import Base, engine, SessionLocal
 from app.middleware.logging import RequestContextMiddleware
@@ -48,6 +48,8 @@ app.include_router(analysis.router, prefix=f"{API}/analysis", tags=["Analysis"])
 app.include_router(dashboard.router, prefix=f"{API}/dashboard", tags=["Dashboard"])
 app.include_router(chat.router, prefix=f"{API}/chat", tags=["Chat"])
 app.include_router(export.router, prefix=f"{API}/export", tags=["Export"])
+app.include_router(market.router, prefix=f"{API}/market", tags=["Market Data"])
+app.include_router(system.router, prefix=f"{API}/system", tags=["System"])
 
 
 @app.get("/health", tags=["Health"])

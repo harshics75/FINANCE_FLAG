@@ -35,6 +35,12 @@ class Settings(BaseSettings):
     azure_di_endpoint: str = ""
     azure_di_api_key: str = ""
 
+    alpha_vantage_api_key: str = ""
+    finnhub_api_key: str = ""
+    fred_api_key: str = ""
+    eia_api_key: str = ""
+    gnews_api_key: str = ""
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]

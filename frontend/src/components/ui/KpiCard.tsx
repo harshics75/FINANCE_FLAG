@@ -15,7 +15,8 @@ export default function KpiCard({ label, value, suffix, delta }: {
 }) {
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-      className="panel p-4 flex flex-col gap-1">
+      className="panel panel-interactive relative p-4 flex flex-col gap-1 overflow-hidden">
+      <span className="absolute inset-x-0 top-0 h-px bg-grad opacity-60" />
       <span className="text-[11px] uppercase tracking-widest text-mute">{label}</span>
       <span className="figure text-2xl font-semibold">{formatNum(value)}{suffix ?? ""}</span>
       {delta !== undefined && delta !== null && (

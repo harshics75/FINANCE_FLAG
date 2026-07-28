@@ -8,6 +8,7 @@ from app.database.session import get_db
 from app.models.models import FinancialMetric, User
 from app.repositories.repositories import AnalysisRepository, AuditLogRepository
 from app.schemas.schemas import (AgentResultOut, AnalysisRunOut, AnalysisRunRequest, MetricOut)
+from app.services.progress_service import get_progress
 from app.services.worker import run_analysis_task
 
 router = APIRouter()
@@ -26,6 +27,13 @@ def run_analysis(payload: AnalysisRunRequest, user: User = Depends(require_finan
         execute_analysis_run(run_id)
         return AnalysisRunOut(run_id=run_id, status="completed")
     return AnalysisRunOut(run_id=run_id, status="queued")
+
+
+@router.get("/progress/{run_id}", dependencies=[Depends(require_any)])
+def analysis_progress(run_id: str):
+    """Live per-node status for an in-flight run: which of the 8 pipeline nodes
+    have actually completed so far, polled by the Agent Network page."""
+    return get_progress(run_id)
 
 
 @router.get("/runs/{run_id}", response_model=list[AgentResultOut], dependencies=[Depends(require_any)])

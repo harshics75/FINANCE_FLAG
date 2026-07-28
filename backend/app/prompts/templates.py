@@ -3,6 +3,9 @@
 SYSTEM_BASE = """You are a senior financial analyst AI inside an enterprise financial intelligence platform.
 Ground every claim in the provided document context and computed metrics. Cite sources as
 [filename, page N] where possible. If the data is insufficient, say so explicitly rather than guessing.
+Every schema below includes a "confidence" field (0-100): rate your OWN confidence in this specific
+analysis given how complete and unambiguous the provided metrics/context were — not a general
+positivity score. Low data coverage or conflicting context should mean low confidence.
 Respond ONLY with valid JSON matching the requested schema — no markdown fences, no preamble."""
 
 FINANCIAL_ANALYST = """Analyze the company's financial performance using the metrics and context below.
@@ -26,7 +29,8 @@ Return JSON:
   "liquidity_ratio": number|null,
   "profitability_assessment": string,
   "period_over_period": [{{"metric": string, "prior": number|null, "current": number|null, "change_pct": number|null, "commentary": string}}],
-  "citations": [string]
+  "citations": [string],
+  "confidence": number (0-100)
 }}"""
 
 RISK_DETECTION = """Identify financial and operational risks from the metrics, trends, and audit context below.
@@ -44,7 +48,8 @@ Return JSON:
   "risk_score": number (0-100, higher = riskier),
   "risks": [{{"title": string, "category": "revenue"|"cash_flow"|"expenses"|"receivables"|"inventory"|"compliance"|"audit"|"other",
              "severity": "low"|"medium"|"high"|"critical", "evidence": string, "citations": [string]}}],
-  "audit_observations": [string]
+  "audit_observations": [string],
+  "confidence": number (0-100)
 }}"""
 
 MARKET_COMPARISON = """Compare this company's performance against typical industry benchmarks for its sector.
@@ -56,11 +61,21 @@ Company metrics:
 Industry/sector context:
 {context}
 
+Live market data (real, current — use this instead of guessing at commodity or currency levels):
+{market_data}
+
+If the company's raw materials or pricing are exposed to the commodities or currency above, explain the
+proportional relationship explicitly (e.g. "a 5% rise in copper raises COGS by approximately X, compressing
+gross margin by Y points at current volumes"). If no live market data is provided, state that market context
+is unavailable rather than inventing figures.
+
 Return JSON:
 {{
   "sector_assumed": string,
   "comparisons": [{{"metric": string, "company": number|null, "industry_typical": string, "position": "above"|"in_line"|"below", "commentary": string}}],
-  "overall_positioning": string
+  "market_exposure": string,
+  "overall_positioning": string,
+  "confidence": number (0-100)
 }}"""
 
 EXECUTIVE_SUMMARY = """Write a management-friendly executive summary of the company's financial position.
@@ -85,7 +100,8 @@ Return JSON:
   "top_risks": [string],
   "green_flags": [string] (exactly the 3 strongest positive indicators, most important first; empty strings if fewer than 3 are supported by the data),
   "red_flags": [string] (exactly the 3 most concerning negative indicators, most important first; empty strings if fewer than 3 are supported by the data),
-  "critical_insights": [string] (exactly 5 critical business insights a board member must know, ordered by importance)
+  "critical_insights": [string] (exactly 5 critical business insights a board member must know, ordered by importance),
+  "confidence": number (0-100)
 }}"""
 
 OPERATIONAL_HIGHLIGHTS = """Extract the most important operational updates from the monthly MIS report context below,
@@ -101,7 +117,8 @@ Return JSON:
   "major_projects": [string] (ongoing or major projects mentioned),
   "production_status": string (production/operational status; empty string if not mentioned),
   "legal_compliance": [string] (legal or compliance matters mentioned),
-  "exceptional_events": [string] (any exceptional business events requiring management attention)
+  "exceptional_events": [string] (any exceptional business events requiring management attention),
+  "confidence": number (0-100)
 }}"""
 
 RECOMMENDATION = """Based on the full analysis below, recommend concrete actions to improve business performance.
@@ -116,7 +133,8 @@ Risks:
 Return JSON:
 {{
   "recommendations": [{{"action": string, "rationale": string, "priority": "high"|"medium"|"low",
-                        "expected_impact": string, "timeframe": string}}]
+                        "expected_impact": string, "timeframe": string}}],
+  "confidence": number (0-100)
 }}"""
 
 CHAT_SYSTEM = """You are a financial analysis assistant. Answer questions about the uploaded financial

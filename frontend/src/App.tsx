@@ -7,9 +7,14 @@ import FinancialPerformance from "./pages/FinancialPerformance";
 import CashFlowDashboard from "./pages/CashFlowDashboard";
 import WorkingCapital from "./pages/WorkingCapital";
 import AIInsights from "./pages/AIInsights";
+import AgentNetwork from "./pages/AgentNetwork";
+import ForecastTimeline from "./pages/ForecastTimeline";
 import OperationalHighlights from "./pages/OperationalHighlights";
+import MarketIntelligenceOperations from "./pages/MarketIntelligenceOperations";
+import MarketIntelligenceStrategy from "./pages/MarketIntelligenceStrategy";
 import DocumentExplorer from "./pages/DocumentExplorer";
 import AuditFindings from "./pages/AuditFindings";
+import BoardReport from "./pages/BoardReport";
 import Chat from "./pages/Chat";
 import Upload from "./pages/Upload";
 
@@ -30,9 +35,14 @@ export default function App() {
         <Route path="/cash-flow" element={<CashFlowDashboard />} />
         <Route path="/working-capital" element={<WorkingCapital />} />
         <Route path="/insights" element={<AIInsights />} />
+        <Route path="/agents" element={<AgentNetwork />} />
+        <Route path="/forecast" element={<ForecastTimeline />} />
         <Route path="/operational" element={<OperationalHighlights />} />
+        <Route path="/market" element={<MarketIntelligenceOperations />} />
+        <Route path="/market/strategy" element={<MarketIntelligenceStrategy />} />
         <Route path="/documents" element={<DocumentExplorer />} />
         <Route path="/audit" element={<AuditFindings />} />
+        <Route path="/board-report" element={<BoardReport />} />
         <Route path="/chat" element={<Chat />} />
         <Route path="/upload" element={<Upload />} />
       </Route>

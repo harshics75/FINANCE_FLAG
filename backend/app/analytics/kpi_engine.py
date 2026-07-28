@@ -2,6 +2,10 @@
 Computes standard KPIs from extracted line items so AI narratives are grounded in real math."""
 from dataclasses import dataclass
 
+PROJECTION_DAYS = [30, 60, 90, 180, 365]
+PROJECTION_LABELS = {30: "30 Days", 60: "60 Days", 90: "90 Days", 180: "6 Months", 365: "12 Months"}
+PROJECTED_METRICS = ["revenue", "net_profit", "cash"]
+
 # Synonyms used to find line items in messy statement labels
 SYNONYMS: dict[str, list[str]] = {
     "revenue": ["revenue", "revenue from operations", "total revenue", "net sales", "sales", "turnover", "income from operations"],
@@ -92,6 +96,9 @@ def compute_kpis(items: dict[str, float], prior_items: dict[str, float] | None =
         m["working_capital"] = ca - cl
         if (cr := _safe_div(ca, cl)) is not None:
             m["current_ratio"] = round(cr, 2)
+            # Disclosed heuristic, not an AI judgment: industry-standard current-ratio
+            # benchmark of 2.0 = fully healthy, scaled linearly 0-100.
+            m["liquidity_score"] = round(min(100.0, max(0.0, cr / 2.0 * 100)), 1)
         if (qr := _safe_div(ca - (g("inventory") or 0.0), cl)) is not None:
             m["quick_ratio"] = round(qr, 2)
     if (dr := _safe_div(g("total_debt"), g("equity"))) is not None:
@@ -125,4 +132,56 @@ def compute_kpis(items: dict[str, float], prior_items: dict[str, float] | None =
         if net_profit is not None and prev_np:
             m["profit_growth_pct"] = round((net_profit - prev_np) / abs(prev_np) * 100, 2)
 
+        # Burn rate / runway: only meaningful when cash actually declined between
+        # periods — assumes ~12 months between annual fiscal periods. Omitted
+        # entirely (not zero, not infinite) when cash isn't shrinking.
+        prev_cash = prior_items.get("cash")
+        cur_cash = g("cash")
+        if cur_cash is not None and prev_cash is not None and cur_cash < prev_cash:
+            burn = (prev_cash - cur_cash) / 12.0
+            if burn > 0:
+                m["burn_rate_monthly"] = round(burn, 2)
+                m["runway_months"] = round(cur_cash / burn, 1)
+
     return KPIResult(metrics=m)
+
+
+def project_trend(ordered_periods: list[tuple[str, dict[str, float]]]) -> dict:
+    """Deterministic trend-based projection — NOT an AI forecast. Extrapolates the
+    growth rate observed between the two most recent fiscal periods forward at fixed
+    day-checkpoints, assuming that rate holds steady. Confidence is a plain function
+    of how many historical periods back it, not a model's self-assessment."""
+    if len(ordered_periods) < 2:
+        return {"available": False, "reason": "Need at least 2 fiscal periods of data to compute a trend."}
+
+    latest_period, latest = ordered_periods[-1]
+    _, prior = ordered_periods[-2]
+
+    n_periods = len(ordered_periods)
+    confidence = min(30 + (n_periods - 1) * 15, 90)
+
+    annual_rates: dict[str, float] = {}
+    for metric in PROJECTED_METRICS:
+        cur, prev = latest.get(metric), prior.get(metric)
+        # (1 + rate) must stay positive for compound extrapolation to be real-valued —
+        # a metric that flipped sign or fell >100% can't be geometrically projected.
+        if cur is not None and prev not in (None, 0) and (1 + (cur - prev) / abs(prev)) > 0:
+            annual_rates[metric] = (cur - prev) / abs(prev)
+
+    milestones = []
+    for days in PROJECTION_DAYS:
+        frac = days / 365.0
+        point: dict = {"label": PROJECTION_LABELS[days], "days": days, "confidence": confidence}
+        for metric in PROJECTED_METRICS:
+            base, rate = latest.get(metric), annual_rates.get(metric)
+            point[metric] = round(base * ((1 + rate) ** frac), 2) if base is not None and rate is not None else None
+        milestones.append(point)
+
+    return {
+        "available": True,
+        "base_period": latest_period,
+        "periods_used": n_periods,
+        "confidence": confidence,
+        "today": {metric: latest.get(metric) for metric in PROJECTED_METRICS},
+        "milestones": milestones,
+    }

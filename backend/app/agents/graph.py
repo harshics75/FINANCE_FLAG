@@ -12,6 +12,8 @@ from langgraph.graph import END, StateGraph
 from app.agents.llm import run_json
 from app.prompts import templates as T
 from app.rag.pipeline import build_context, retrieve
+from app.services.market_data_service import get_live_market_data
+from app.services.progress_service import mark_node_complete
 
 logger = logging.getLogger(__name__)
 
@@ -51,9 +53,17 @@ def node_risk_detection(state: AnalysisState) -> AnalysisState:
     return {"risks": result}
 
 
+def _market_data_str() -> str:
+    data = get_live_market_data()
+    if not data:
+        return "unavailable"
+    return json.dumps(data, indent=2)
+
+
 def node_market_comparison(state: AnalysisState) -> AnalysisState:
     result = run_json(T.SYSTEM_BASE, T.MARKET_COMPARISON.format(
-        metrics=_metrics_str(state), context=state.get("context", "")))
+        metrics=_metrics_str(state), context=state.get("context", ""),
+        market_data=_market_data_str()))
     return {"market": result}
 
 
@@ -110,6 +120,16 @@ def build_graph():
     return g.compile()
 
 
-def run_analysis(metrics: dict) -> AnalysisState:
+def run_analysis(metrics: dict, run_id: str | None = None) -> AnalysisState:
     graph = build_graph()
-    return graph.invoke({"metrics": metrics})
+    if not run_id:
+        return graph.invoke({"metrics": metrics})
+
+    # Stream node-by-node so genuine live progress can be published as each one
+    # actually completes, instead of only knowing the result at the very end.
+    state: dict = {"metrics": metrics}
+    for update in graph.stream({"metrics": metrics}, stream_mode="updates"):
+        for node_name, node_output in update.items():
+            state.update(node_output)
+            mark_node_complete(run_id, node_name)
+    return state  # type: ignore[return-value]

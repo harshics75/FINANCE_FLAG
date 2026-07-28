@@ -136,6 +136,18 @@ class AuditLog(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
 
+class MarketSnapshot(Base):
+    """One row per (series, day) — the historical record the correlation engine and
+    trend projections read from. Populated incrementally as live data is fetched, so
+    correlation quality grows with real usage instead of being backfilled with guesses."""
+    __tablename__ = "market_snapshots"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    series: Mapped[str] = mapped_column(String(64), index=True)
+    value: Mapped[float] = mapped_column(Float)
+    source: Mapped[str] = mapped_column(String(32), default="alpha_vantage")
+    recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, index=True)
+
+
 class ChatHistory(Base):
     __tablename__ = "chat_history"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
