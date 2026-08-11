@@ -14,7 +14,7 @@ api.interceptors.request.use((config) => {
 let refreshing: Promise<string> | null = null;
 api.interceptors.response.use(undefined, async (error) => {
   const original = error.config;
-  if (error.response?.status === 401 && !original._retry) {
+  if (error.response?.status === 401 && !original._retry && original.url !== "/auth/refresh") {
     const refresh = localStorage.getItem("refresh_token");
     if (!refresh) { window.location.href = "/login"; return Promise.reject(error); }
     original._retry = true;

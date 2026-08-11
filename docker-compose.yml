@@ -24,6 +24,8 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://finai:finai@db:5432/finai
       REDIS_URL: redis://redis:6379/0
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      UPLOAD_DIR: /data/uploads
     ports: ["8000:8000"]
     volumes: [uploads:/data/uploads]
     depends_on:
@@ -32,11 +34,13 @@ services:
 
   worker:
     build: ./backend
-    command: celery -A app.services.worker.celery_app worker -l info
+    command: celery -A app.services.worker.celery_app worker -l info --concurrency=2
     env_file: .env
     environment:
       DATABASE_URL: postgresql+psycopg://finai:finai@db:5432/finai
       REDIS_URL: redis://redis:6379/0
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      UPLOAD_DIR: /data/uploads
     volumes: [uploads:/data/uploads]
     depends_on: [backend]
 

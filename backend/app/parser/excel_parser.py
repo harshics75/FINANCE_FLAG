@@ -13,7 +13,7 @@ class ParsedSheet:
     line_items: dict[str, float] = field(default_factory=dict)
 
 
-def parse_excel(path: str) -> list[ParsedSheet]:
+def parse_excel(path: str, fiscal_period: str | None = None) -> list[ParsedSheet]:
     sheets: list[ParsedSheet] = []
     xls = pd.ExcelFile(path)
     for name in xls.sheet_names:
@@ -22,6 +22,6 @@ def parse_excel(path: str) -> list[ParsedSheet]:
             continue
         md = df.head(200).to_markdown(index=False)
         rows = [[None if pd.isna(cell) else cell for cell in row] for row in df.itertuples(index=False)]
-        line_items = extract_line_items(rows)
+        line_items = extract_line_items(rows, fiscal_period)
         sheets.append(ParsedSheet(name=name, markdown=md, line_items=line_items))
     return sheets

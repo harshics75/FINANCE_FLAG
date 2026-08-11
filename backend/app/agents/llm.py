@@ -28,15 +28,39 @@ def get_llm(temperature: float = 0.1) -> BaseChatModel:
     )
 
 
+def _extract_json_object(text: str) -> str | None:
+    """Pull the first balanced {...} block out of text that may contain
+    stray prose or markdown fences around the JSON the model was asked for."""
+    start = text.find("{")
+    if start == -1:
+        return None
+    depth = 0
+    for i, ch in enumerate(text[start:], start):
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start:i + 1]
+    return None
+
+
 def run_json(system: str, user: str, temperature: float = 0.1) -> dict:
     llm = get_llm(temperature)
-    resp = llm.invoke([("system", system), ("user", user)])
-    text = resp.content.strip()
-    if text.startswith("```"):
-        text = text.strip("`")
-        text = text[4:] if text.startswith("json") else text
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        logger.warning("Agent returned non-JSON output; wrapping as raw text")
-        return {"raw": resp.content}
+    resp = None
+    for attempt in range(2):
+        resp = llm.invoke([("system", system), ("user", user)])
+        text = resp.content.strip()
+        if text.startswith("```"):
+            text = text.strip("`")
+            text = text[4:] if text.lower().startswith("json") else text
+        for candidate in (text, _extract_json_object(text)):
+            if not candidate:
+                continue
+            try:
+                return json.loads(candidate)
+            except json.JSONDecodeError:
+                continue
+        logger.warning("Agent returned non-JSON output (attempt %d)", attempt + 1)
+        user = user + "\n\nIMPORTANT: Respond with ONLY a single valid JSON object — no prose, no markdown fences."
+    return {"raw": resp.content}

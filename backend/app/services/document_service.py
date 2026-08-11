@@ -43,6 +43,7 @@ def process_document(document_id: str) -> None:
 
             payloads: list[ChunkPayload] = []
             line_items: dict[str, float] = {}
+            sheet_count = 0
 
             if doc.storage_path.lower().endswith(".pdf"):
                 parsed = parse_pdf(doc.storage_path)
@@ -53,11 +54,12 @@ def process_document(document_id: str) -> None:
                     payloads.extend(chunk_text(page.text, page.page_number))
                     for table in page.tables:
                         payloads.append(chunk_table(table_to_markdown(table), page.page_number))
-                        line_items.update(extract_line_items(table))
+                        line_items.update(extract_line_items(table, doc.fiscal_period))
             else:
-                for sheet in parse_excel(doc.storage_path):
+                for sheet in parse_excel(doc.storage_path, doc.fiscal_period):
                     payloads.append(chunk_table(sheet.markdown, 0, sheet=sheet.name))
                     line_items.update(sheet.line_items)
+                    sheet_count += 1
 
             chunks = [
                 Chunk(document_id=doc.id, chunk_index=i, page_number=p.page_number,
@@ -76,8 +78,11 @@ def process_document(document_id: str) -> None:
             )
             db.add_all([Embedding(chunk_id=c.id, vector_store=settings.vector_store) for c in chunks])
 
-            # Persist deterministic line items as metrics keyed by fiscal period
-            if line_items and doc.fiscal_period:
+            # Persist deterministic line items as metrics keyed by fiscal period.
+            # Skip large multi-sheet workbooks (raw trial-balance/notes dumps) — merging
+            # dozens of sheets by label produces noisy, sheet-order-dependent values that
+            # clobber the clean figures from single-statement exports of the same period.
+            if line_items and doc.fiscal_period and sheet_count <= 15:
                 repo = MetricRepository(db)
                 for name, value in match_line_items(line_items).items():
                     repo.upsert(FinancialMetric(document_id=doc.id, fiscal_period=doc.fiscal_period,
