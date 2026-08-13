@@ -3,10 +3,15 @@
 # Import: Render dashboard -> New -> Blueprint -> connect this GitHub repo.
 # Render will read this file and offer to create everything below in one step.
 #
-# NOTE ON COST: "web" (financeflag-backend), the Postgres database, and Redis can
-# all run on Render's free plan. The "worker" service (financeflag-worker, the
-# Celery process that runs document analysis) is NOT available on Render's free
-# tier — it needs at least the Starter plan (~$7/month). Everything else here is free.
+# NOTE ON COST: everything in this blueprint (web, Postgres, Redis) runs on Render's
+# free plan. The Celery worker (which runs document analysis) is deliberately left
+# OUT of this blueprint because background workers require a paid plan (~$7/month
+# Starter), which also forces Render to ask for a credit card just to import the
+# blueprint at all. Add it later yourself once you're ready to pay: Render dashboard
+# -> New -> Background Worker -> same repo -> Dockerfile path ./backend/Dockerfile,
+# Docker context ./backend, start command:
+#   celery -A app.services.worker.celery_app worker -l info --concurrency=2
+# and copy the same env vars as financeflag-backend below.
 #
 # Any envVar marked `sync: false` is a secret Render will prompt you to paste in
 # during setup rather than storing in this file.
@@ -70,35 +75,3 @@ services:
         sync: false
       - key: GNEWS_API_KEY
         sync: false
-
-  - type: worker
-    name: financeflag-worker
-    runtime: docker
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
-    dockerCommand: celery -A app.services.worker.celery_app worker -l info --concurrency=2
-    plan: starter # background workers are not available on Render's free plan
-    envVars:
-      - key: APP_ENV
-        value: production
-      - key: DATABASE_URL
-        fromDatabase:
-          name: financeflag-db
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: financeflag-redis
-          property: connectionString
-      - key: UPLOAD_DIR
-        value: /data/uploads
-      - key: VECTOR_STORE
-        value: faiss
-      - key: OCR_PROVIDER
-        value: tesseract
-      - key: LLM_PROVIDER
-        value: groq
-      - key: GROQ_API_KEY
-        sync: false
-      - key: GROQ_CHAT_MODEL
-        value: llama-3.3-70b-versatile
