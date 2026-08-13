@@ -18,6 +18,13 @@ def system_info():
             "chat_model": settings.ollama_chat_model,
             "embedding_model": settings.ollama_embedding_model,
         }
+    if settings.llm_provider == "groq":
+        return {
+            "provider": "groq",
+            "label": "Groq",
+            "chat_model": settings.groq_chat_model,
+            "embedding_model": settings.local_embedding_model,
+        }
     return {
         "provider": "azure",
         "label": "Azure OpenAI",
