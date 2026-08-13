@@ -1,0 +1,104 @@
+# Render Blueprint for FINANCE_FLAG.
+#
+# Import: Render dashboard -> New -> Blueprint -> connect this GitHub repo.
+# Render will read this file and offer to create everything below in one step.
+#
+# NOTE ON COST: "web" (financeflag-backend), the Postgres database, and Redis can
+# all run on Render's free plan. The "worker" service (financeflag-worker, the
+# Celery process that runs document analysis) is NOT available on Render's free
+# tier — it needs at least the Starter plan (~$7/month). Everything else here is free.
+#
+# Any envVar marked `sync: false` is a secret Render will prompt you to paste in
+# during setup rather than storing in this file.
+
+databases:
+  - name: financeflag-db
+    databaseName: finai
+    user: finai
+    plan: free
+
+services:
+  - type: redis
+    name: financeflag-redis
+    plan: free
+    ipAllowList: []
+
+  - type: web
+    name: financeflag-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: financeflag-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: financeflag-redis
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        sync: false # set to your Vercel URL, e.g. https://your-app.vercel.app
+      - key: UPLOAD_DIR
+        value: /data/uploads
+      - key: VECTOR_STORE
+        value: faiss
+      - key: OCR_PROVIDER
+        value: tesseract
+      - key: LLM_PROVIDER
+        value: groq
+      - key: GROQ_API_KEY
+        sync: false # from https://console.groq.com/keys
+      - key: GROQ_CHAT_MODEL
+        value: llama-3.3-70b-versatile
+      - key: NEWSDATA_API_KEY
+        sync: false
+      - key: ALPHA_VANTAGE_API_KEY
+        sync: false
+      - key: FINNHUB_API_KEY
+        sync: false
+      - key: FRED_API_KEY
+        sync: false
+      - key: EIA_API_KEY
+        sync: false
+      - key: GNEWS_API_KEY
+        sync: false
+
+  - type: worker
+    name: financeflag-worker
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    dockerCommand: celery -A app.services.worker.celery_app worker -l info --concurrency=2
+    plan: starter # background workers are not available on Render's free plan
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: financeflag-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: financeflag-redis
+          property: connectionString
+      - key: UPLOAD_DIR
+        value: /data/uploads
+      - key: VECTOR_STORE
+        value: faiss
+      - key: OCR_PROVIDER
+        value: tesseract
+      - key: LLM_PROVIDER
+        value: groq
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_CHAT_MODEL
+        value: llama-3.3-70b-versatile

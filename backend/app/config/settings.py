@@ -21,10 +21,18 @@ class Settings(BaseSettings):
     azure_openai_chat_deployment: str = "gpt-4o"
     azure_openai_embedding_deployment: str = "text-embedding-3-large"
 
-    llm_provider: str = "azure"  # azure | ollama
+    llm_provider: str = "azure"  # azure | ollama | groq
     ollama_base_url: str = "http://localhost:11434"
     ollama_chat_model: str = "mistral:7b-instruct-q4_0"
     ollama_embedding_model: str = "nomic-embed-text"
+
+    # Groq (free, fast hosted inference) has no embeddings endpoint, so the "groq"
+    # provider pairs Groq chat completions with a small local ONNX embedding model
+    # (via fastembed) that runs in-process — no separate embedding server needed.
+    groq_api_key: str = ""
+    groq_base_url: str = "https://api.groq.com/openai/v1"
+    groq_chat_model: str = "llama-3.3-70b-versatile"
+    local_embedding_model: str = "BAAI/bge-small-en-v1.5"
 
     vector_store: str = "faiss"  # azure_search | faiss
     azure_search_endpoint: str = ""
@@ -48,7 +56,11 @@ class Settings(BaseSettings):
 
     @property
     def embedding_dim(self) -> int:
-        return 768 if self.llm_provider == "ollama" else 3072
+        if self.llm_provider == "ollama":
+            return 768
+        if self.llm_provider == "groq":
+            return 384  # BAAI/bge-small-en-v1.5
+        return 3072
 
 
 @lru_cache

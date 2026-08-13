@@ -1,9 +1,18 @@
-"""Azure OpenAI embeddings (text-embedding-3-large)."""
+"""Embeddings — Azure OpenAI, Ollama, or a local in-process ONNX model for Groq
+(Groq serves chat completions only, no embeddings endpoint)."""
+from functools import lru_cache
+
 from openai import AzureOpenAI, OpenAI
 
 from app.config.settings import get_settings
 
 settings = get_settings()
+
+
+@lru_cache
+def _local_model():
+    from fastembed import TextEmbedding
+    return TextEmbedding(model_name=settings.local_embedding_model)
 
 
 def _client() -> AzureOpenAI | OpenAI:
@@ -19,6 +28,8 @@ def _client() -> AzureOpenAI | OpenAI:
 def embed_texts(texts: list[str]) -> list[list[float]]:
     if not texts:
         return []
+    if settings.llm_provider == "groq":
+        return [vec.tolist() for vec in _local_model().embed(texts)]
     client = _client()
     model = (settings.ollama_embedding_model if settings.llm_provider == "ollama"
              else settings.azure_openai_embedding_deployment)

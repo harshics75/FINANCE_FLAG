@@ -19,6 +19,13 @@ def get_llm(temperature: float = 0.1) -> BaseChatModel:
             model=settings.ollama_chat_model,
             temperature=temperature,
         )
+    if settings.llm_provider == "groq":
+        return ChatOpenAI(
+            base_url=settings.groq_base_url,
+            api_key=settings.groq_api_key,
+            model=settings.groq_chat_model,
+            temperature=temperature,
+        )
     return AzureChatOpenAI(
         azure_endpoint=settings.azure_openai_endpoint,
         api_key=settings.azure_openai_api_key,
