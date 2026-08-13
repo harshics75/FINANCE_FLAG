@@ -17,6 +17,15 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     upload_dir: str = "/data/uploads"
 
+    # File storage: "local" (disk, fine when backend+worker share a filesystem, e.g.
+    # Docker Compose) or "r2" (Cloudflare R2, needed when backend and worker run as
+    # separate hosts/containers with no shared disk, e.g. Render + a worker elsewhere).
+    storage_provider: str = "local"
+    r2_endpoint_url: str = ""
+    r2_access_key_id: str = ""
+    r2_secret_access_key: str = ""
+    r2_bucket_name: str = "finance-flag-uploads"
+
     azure_openai_endpoint: str = ""
     azure_openai_api_key: str = ""
     azure_openai_api_version: str = "2024-10-21"

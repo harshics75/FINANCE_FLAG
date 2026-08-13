@@ -1,7 +1,6 @@
 """End-to-end document processing pipeline (runs in Celery worker):
 validate → detect scanned → text/tables → OCR → chunk → embed → vector store → metadata."""
 import logging
-import os
 
 from app.analytics.kpi_engine import match_line_items
 from app.config.settings import get_settings
@@ -13,22 +12,14 @@ from app.parser.pdf_parser import parse_pdf, table_to_markdown
 from app.rag.chunker import ChunkPayload, chunk_table, chunk_text
 from app.rag.pipeline import index_chunks
 from app.repositories.repositories import MetricRepository
+from app.storage.object_storage import local_path, save_bytes
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
 def save_upload(data: bytes, filename: str) -> str:
-    os.makedirs(settings.upload_dir, exist_ok=True)
-    path = os.path.join(settings.upload_dir, filename)
-    base, ext = os.path.splitext(path)
-    n = 1
-    while os.path.exists(path):  # simple versioned filenames
-        path = f"{base}_v{n}{ext}"
-        n += 1
-    with open(path, "wb") as f:
-        f.write(data)
-    return path
+    return save_bytes(data, filename)
 
 
 def process_document(document_id: str) -> None:
@@ -45,21 +36,22 @@ def process_document(document_id: str) -> None:
             line_items: dict[str, float] = {}
             sheet_count = 0
 
-            if doc.storage_path.lower().endswith(".pdf"):
-                parsed = parse_pdf(doc.storage_path)
-                doc.is_scanned = parsed.is_scanned
-                doc.page_count = parsed.metadata.get("page_count", 0)
-                doc.meta = {**doc.meta, **parsed.metadata}
-                for page in parsed.pages:
-                    payloads.extend(chunk_text(page.text, page.page_number))
-                    for table in page.tables:
-                        payloads.append(chunk_table(table_to_markdown(table), page.page_number))
-                        line_items.update(extract_line_items(table, doc.fiscal_period))
-            else:
-                for sheet in parse_excel(doc.storage_path, doc.fiscal_period):
-                    payloads.append(chunk_table(sheet.markdown, 0, sheet=sheet.name))
-                    line_items.update(sheet.line_items)
-                    sheet_count += 1
+            with local_path(doc.storage_path) as path:
+                if doc.storage_path.lower().endswith(".pdf"):
+                    parsed = parse_pdf(path)
+                    doc.is_scanned = parsed.is_scanned
+                    doc.page_count = parsed.metadata.get("page_count", 0)
+                    doc.meta = {**doc.meta, **parsed.metadata}
+                    for page in parsed.pages:
+                        payloads.extend(chunk_text(page.text, page.page_number))
+                        for table in page.tables:
+                            payloads.append(chunk_table(table_to_markdown(table), page.page_number))
+                            line_items.update(extract_line_items(table, doc.fiscal_period))
+                else:
+                    for sheet in parse_excel(path, doc.fiscal_period):
+                        payloads.append(chunk_table(sheet.markdown, 0, sheet=sheet.name))
+                        line_items.update(sheet.line_items)
+                        sheet_count += 1
 
             chunks = [
                 Chunk(document_id=doc.id, chunk_index=i, page_number=p.page_number,
