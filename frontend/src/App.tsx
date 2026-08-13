@@ -10,8 +10,7 @@ import AIInsights from "./pages/AIInsights";
 import AgentNetwork from "./pages/AgentNetwork";
 import ForecastTimeline from "./pages/ForecastTimeline";
 import OperationalHighlights from "./pages/OperationalHighlights";
-import MarketIntelligenceOperations from "./pages/MarketIntelligenceOperations";
-import MarketIntelligenceStrategy from "./pages/MarketIntelligenceStrategy";
+import MarketBusinessIntelligence from "./pages/MarketBusinessIntelligence";
 import DocumentExplorer from "./pages/DocumentExplorer";
 import AuditFindings from "./pages/AuditFindings";
 import BoardReport from "./pages/BoardReport";
@@ -38,8 +37,8 @@ export default function App() {
         <Route path="/agents" element={<AgentNetwork />} />
         <Route path="/forecast" element={<ForecastTimeline />} />
         <Route path="/operational" element={<OperationalHighlights />} />
-        <Route path="/market" element={<MarketIntelligenceOperations />} />
-        <Route path="/market/strategy" element={<MarketIntelligenceStrategy />} />
+        <Route path="/market" element={<MarketBusinessIntelligence />} />
+        <Route path="/market/strategy" element={<Navigate to="/market" replace />} />
         <Route path="/documents" element={<DocumentExplorer />} />
         <Route path="/audit" element={<AuditFindings />} />
         <Route path="/board-report" element={<BoardReport />} />

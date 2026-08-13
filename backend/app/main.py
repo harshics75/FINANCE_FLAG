@@ -10,6 +10,7 @@ from app.database.session import Base, engine, SessionLocal
 from app.middleware.logging import RequestContextMiddleware
 from app.auth.security import hash_password
 from app.models.models import Role, User
+from app.services.sector_profiles import seed_sector_profiles
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 settings = get_settings()
@@ -28,6 +29,8 @@ async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     if settings.app_env == "development":
         seed_admin()
+    with SessionLocal() as db:
+        seed_sector_profiles(db)
     yield
 
 

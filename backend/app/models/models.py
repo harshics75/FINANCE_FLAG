@@ -148,6 +148,63 @@ class MarketSnapshot(Base):
     recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, index=True)
 
 
+class SectorProfile(Base):
+    """Stardrive's historical FY23-24 enquiry/order performance per sector — the
+    business-history input to relevance_scoring.py's sector_weight(). Seeded once at
+    startup (see main.py) from a fixed table, not user-editable yet. `dimension`
+    distinguishes true sectors from Export, which is a sales channel that cuts across
+    sectors rather than a sector itself (see architecture notes)."""
+    __tablename__ = "sector_profiles"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    key: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    label: Mapped[str] = mapped_column(String(128))
+    tier: Mapped[int] = mapped_column(Integer, default=5)
+    dimension: Mapped[str] = mapped_column(String(16), default="sector")  # sector | channel
+    enquiry_cr: Mapped[float] = mapped_column(Float, default=0.0)
+    orders_cr: Mapped[float] = mapped_column(Float, default=0.0)
+    conversion_pct: Mapped[float] = mapped_column(Float, default=0.0)
+
+
+class MarketOpportunity(Base):
+    """A normalized external project/tender entity scored for Stardrive relevance.
+    `stardrive_opportunity_value_cr` is deliberately separate from `project_value_cr` —
+    never equated, never fabricated when unknown (see relevance_scoring.py)."""
+    __tablename__ = "market_opportunities"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    title: Mapped[str] = mapped_column(String(512))
+    sector: Mapped[str] = mapped_column(String(64), index=True)
+    is_emerging: Mapped[bool] = mapped_column(default=False)
+    location: Mapped[str] = mapped_column(String(128), default="")
+    project_value_cr: Mapped[float | None] = mapped_column(Float, nullable=True)
+    stage: Mapped[str] = mapped_column(String(64), default="")
+    tender_deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    customer_epc: Mapped[str] = mapped_column(String(255), default="")
+    stardrive_opportunity_value_cr: Mapped[float | None] = mapped_column(Float, nullable=True)
+    relevance_score: Mapped[float] = mapped_column(Float, default=0.0, index=True)
+    score_breakdown: Mapped[dict] = mapped_column(JSON, default=dict)
+    strategic_override: Mapped[bool] = mapped_column(default=False)
+    strategic_override_reason: Mapped[str] = mapped_column(String(512), default="")
+    source_name: Mapped[str] = mapped_column(String(128), default="")
+    source_url: Mapped[str] = mapped_column(String(1024), default="")
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    retrieved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    confidence: Mapped[int] = mapped_column(Integer, default=100)
+    status: Mapped[str] = mapped_column(String(32), default="demo")  # live | demo
+
+
+class MarketInsight(Base):
+    """One AI Executive Brief bullet — the LLM only phrases these, ranking and facts
+    are decided upstream by relevance_scoring.py / business_impact_service.py."""
+    __tablename__ = "market_insights"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    tone: Mapped[str] = mapped_column(String(16), default="amber")  # red | amber | green
+    headline: Mapped[str] = mapped_column(String(512))
+    why_it_matters: Mapped[str] = mapped_column(Text, default="")
+    related_opportunity_id: Mapped[str | None] = mapped_column(ForeignKey("market_opportunities.id"), nullable=True)
+    source_refs: Mapped[list] = mapped_column(JSON, default=list)
+    generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, index=True)
+
+
 class ChatHistory(Base):
     __tablename__ = "chat_history"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)

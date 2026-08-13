@@ -9,6 +9,7 @@ than guessed at.
 """
 import json
 import logging
+import threading
 import time
 from datetime import datetime, timezone
 
@@ -19,6 +20,12 @@ from app.config.settings import get_settings
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
+_USE_REDIS = settings.redis_url.startswith(("redis://", "rediss://", "unix://"))
+
+# In-process fallback for local dev (REDIS_URL=memory://), matching the pattern
+# used by progress_service.py and providers/http_cache.py.
+_memory_store: dict[str, tuple[float, str]] = {}
+_memory_lock = threading.Lock()
 
 BASE_URL = "https://www.alphavantage.co/query"
 CACHE_TTL_SECONDS = 24 * 60 * 60
@@ -35,8 +42,32 @@ SERIES = {
 _redis: redis.Redis | None = None
 
 
-def _cache() -> redis.Redis:
+class _MemoryCache:
+    """Drop-in stand-in for the subset of the redis-py interface used here."""
+
+    def get(self, key: str) -> str | None:
+        with _memory_lock:
+            entry = _memory_store.get(key)
+            if entry is None:
+                return None
+            expires_at, value = entry
+            if time.time() >= expires_at:
+                del _memory_store[key]
+                return None
+            return value
+
+    def setex(self, key: str, ttl: int, value: str) -> None:
+        with _memory_lock:
+            _memory_store[key] = (time.time() + ttl, value)
+
+
+_memory_cache = _MemoryCache()
+
+
+def _cache():
     global _redis
+    if not _USE_REDIS:
+        return _memory_cache
     if _redis is None:
         _redis = redis.from_url(settings.redis_url, decode_responses=True)
     return _redis

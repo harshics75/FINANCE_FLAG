@@ -1,10 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import api from "../services/api";
 import type { DashboardPayload, DocumentItem } from "../types";
-import type {
-  BusinessImpact, CommodityMap, CompetitorMove, CorrelationPair, EconomicIndicatorMap, GlobalEvent,
-  GovernmentItem, InfrastructureProject, NewsArticle, TradeIntelligence, WeatherRisk,
-} from "../types/market";
+import type { CommodityMap, CorrelationPair, MarketIntelligencePayload, NewsArticle } from "../types/market";
 
 export const useDashboard = (page: string) =>
   useQuery({
@@ -34,13 +31,6 @@ export const useMarketNews = () =>
     refetchInterval: 15 * 60_000,
   });
 
-export const useIndustrialNews = () =>
-  useQuery({
-    queryKey: ["market", "industrial-news"],
-    queryFn: async () => (await api.get<any[]>("/market/industrial-news")).data,
-    refetchInterval: 15 * 60_000,
-  });
-
 export const useCommodities = () =>
   useQuery({
     queryKey: ["market", "commodities"],
@@ -62,69 +52,6 @@ export const useCorrelations = () =>
     refetchInterval: 5 * 60_000,
   });
 
-export const useBusinessImpact = () =>
-  useQuery({
-    queryKey: ["market", "impact"],
-    queryFn: async () => (await api.get<BusinessImpact[]>("/market/impact")).data,
-    refetchInterval: 5 * 60_000,
-  });
-
-export const useInfrastructureProjects = () =>
-  useQuery({
-    queryKey: ["market", "infrastructure"],
-    queryFn: async () => (await api.get<InfrastructureProject[]>("/market/infrastructure")).data,
-    staleTime: 60 * 60_000,
-  });
-
-export const useCompetitors = () =>
-  useQuery({
-    queryKey: ["market", "competitors"],
-    queryFn: async () => (await api.get<CompetitorMove[]>("/market/competitors")).data,
-    staleTime: 60 * 60_000,
-  });
-
-export const useGovernmentItems = () =>
-  useQuery({
-    queryKey: ["market", "government"],
-    queryFn: async () => (await api.get<GovernmentItem[]>("/market/government")).data,
-    staleTime: 60 * 60_000,
-  });
-
-export const useEconomicIndicators = () =>
-  useQuery({
-    queryKey: ["market", "economic-indicators"],
-    queryFn: async () => (await api.get<EconomicIndicatorMap>("/market/economic-indicators")).data,
-    staleTime: 60 * 60_000,
-  });
-
-export const useEnergyIndicators = () =>
-  useQuery({
-    queryKey: ["market", "energy"],
-    queryFn: async () => (await api.get<EconomicIndicatorMap>("/market/energy")).data,
-    staleTime: 60 * 60_000,
-  });
-
-export const useWeatherRisk = () =>
-  useQuery({
-    queryKey: ["market", "weather-risk"],
-    queryFn: async () => (await api.get<WeatherRisk[]>("/market/weather-risk")).data,
-    refetchInterval: 30 * 60_000,
-  });
-
-export const useGlobalEvents = () =>
-  useQuery({
-    queryKey: ["market", "global-events"],
-    queryFn: async () => (await api.get<GlobalEvent[]>("/market/global-events")).data,
-    refetchInterval: 15 * 60_000,
-  });
-
-export const useManufacturingNews = () =>
-  useQuery({
-    queryKey: ["market", "manufacturing-news"],
-    queryFn: async () => (await api.get<NewsArticle[]>("/market/manufacturing-news")).data,
-    staleTime: 60 * 60_000,
-  });
-
 export const useCompanyIntel = () =>
   useQuery({
     queryKey: ["market", "company-intel"],
@@ -132,11 +59,11 @@ export const useCompanyIntel = () =>
     staleTime: 60 * 60_000,
   });
 
-export const useTradeIntelligence = () =>
+export const useMarketIntelligence = () =>
   useQuery({
-    queryKey: ["market", "trade"],
-    queryFn: async () => (await api.get<TradeIntelligence>("/market/trade")).data,
-    staleTime: 60 * 60_000,
+    queryKey: ["market", "intelligence"],
+    queryFn: async () => (await api.get<MarketIntelligencePayload>("/market/intelligence")).data,
+    refetchInterval: 5 * 60_000,
   });
 
 export const useSystemInfo = () =>

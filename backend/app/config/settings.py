@@ -40,6 +40,7 @@ class Settings(BaseSettings):
     fred_api_key: str = ""
     eia_api_key: str = ""
     gnews_api_key: str = ""
+    newsdata_api_key: str = ""
 
     @property
     def cors_origin_list(self) -> list[str]:

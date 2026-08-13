@@ -5,6 +5,7 @@ reimplemented per provider.
 """
 import json
 import logging
+import threading
 import time
 
 import httpx
@@ -15,6 +16,13 @@ from app.config.settings import get_settings
 logger = logging.getLogger(__name__)
 settings = get_settings()
 _redis: redis.Redis | None = None
+_USE_REDIS = settings.redis_url.startswith(("redis://", "rediss://", "unix://"))
+
+# In-process fallback for local dev (REDIS_URL=memory://), matching the pattern
+# used by progress_service.py. Entries are (expires_at, value); expiry is checked
+# lazily on read rather than via a background sweep.
+_memory_store: dict[str, tuple[float, str]] = {}
+_memory_lock = threading.Lock()
 
 
 def _cache() -> redis.Redis:
@@ -24,13 +32,34 @@ def _cache() -> redis.Redis:
     return _redis
 
 
+def _cache_get(key: str) -> str | None:
+    if _USE_REDIS:
+        return _cache().get(key)
+    with _memory_lock:
+        entry = _memory_store.get(key)
+        if entry is None:
+            return None
+        expires_at, value = entry
+        if time.time() >= expires_at:
+            del _memory_store[key]
+            return None
+        return value
+
+
+def _cache_setex(key: str, ttl: int, value: str) -> None:
+    if _USE_REDIS:
+        _cache().setex(key, ttl, value)
+    else:
+        with _memory_lock:
+            _memory_store[key] = (time.time() + ttl, value)
+
+
 def cached_get_json(cache_key: str, ttl: int, url: str, params: dict | None = None,
                      timeout: float = 10.0, retries: int = 2):
     """Returns cached JSON if present, else fetches with retries. Returns None (never
     raises) on total failure so callers can report status="unavailable" instead of
     crashing the page or fabricating a value."""
-    cache = _cache()
-    cached = cache.get(cache_key)
+    cached = _cache_get(cache_key)
     if cached is not None:
         return json.loads(cached)
 
@@ -40,7 +69,7 @@ def cached_get_json(cache_key: str, ttl: int, url: str, params: dict | None = No
             resp = httpx.get(url, params=params, timeout=timeout, follow_redirects=True)
             resp.raise_for_status()
             data = resp.json()
-            cache.setex(cache_key, ttl, json.dumps(data))
+            _cache_setex(cache_key, ttl, json.dumps(data))
             return data
         except Exception as e:
             last_error = e

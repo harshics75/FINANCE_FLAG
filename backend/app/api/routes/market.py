@@ -3,7 +3,10 @@ from sqlalchemy.orm import Session
 
 from app.auth.dependencies import require_any
 from app.database.session import get_db
-from app.services import business_impact_service, correlation_service
+from app.services import (
+    business_impact_service, correlation_service, market_brief_service,
+    news_relevance_service, opportunity_extraction_service,
+)
 from app.services.market_data_service import get_live_market_data, get_live_news
 from app.services.providers.alpha_vantage_provider import AlphaVantageCommodityProvider, AlphaVantageNewsProvider
 from app.services.providers.comtrade_provider import UNComtradeProvider
@@ -19,6 +22,7 @@ from app.services.providers.lme_provider import LMEProvider
 from app.services.providers.mock_providers import (
     MockCompetitorProvider, MockGovernmentProjectsProvider, MockInfrastructureProvider,
 )
+from app.services.providers.newsdata_provider import NewsDataProvider
 from app.services.providers.open_meteo_provider import OpenMeteoProvider
 from app.services.providers.world_bank_provider import WorldBankProvider
 
@@ -41,6 +45,7 @@ _gnews = GNewsProvider()
 _finnhub = FinnhubProvider()
 _comtrade = UNComtradeProvider()
 _data_gov_in = DataGovInProvider()
+_newsdata = NewsDataProvider()
 
 INDUSTRIAL_TOPICS = ["manufacturing", "energy_transportation", "economy_macro"]
 
@@ -165,3 +170,32 @@ def industrial_news():
     """Same Alpha Vantage news feed, filtered toward manufacturing/energy/macro topics
     instead of generic Wall Street headlines."""
     return _news.get_articles(topics=INDUSTRIAL_TOPICS)
+
+
+@router.get("/intelligence", dependencies=[Depends(require_any)])
+def market_intelligence(db: Session = Depends(get_db)):
+    """The consolidated Stardrive Market & Business Intelligence page — every section
+    already deterministically scored/filtered against Stardrive's historical sector
+    performance before the (single, cached, non-blocking) AI Executive Brief call. See
+    business_impact_service, opportunity_extraction_service, market_brief_service."""
+    market_data = get_live_market_data(db=db)
+    weather = _weather.get_risk_assessment()
+    material_margin = business_impact_service.assess_all(market_data) + business_impact_service.assess_weather(weather)
+
+    high_risk_hubs = [w for w in weather if w.get("risk_level") == "high"]
+    macro_logistics = {
+        "usd_inr": market_data.get("usd_inr"),
+        "logistics_risk_hubs": high_risk_hubs,
+    }
+
+    return {
+        "executive_brief": market_brief_service.get_executive_brief(db),
+        "opportunities": opportunity_extraction_service.core_opportunities(db),
+        "emerging_opportunities": opportunity_extraction_service.emerging_opportunities(db),
+        "material_margin": material_margin,
+        "core_sectors": opportunity_extraction_service.core_sector_intelligence(db),
+        "market_signals": news_relevance_service.score_and_tag_articles(db, _newsdata.get_articles())[:8],
+        "competitors": _competitors.get_competitors(),
+        "policy_tenders": _gov.get_items(),
+        "macro_logistics": macro_logistics,
+    }

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
-  Activity, Banknote, ClipboardList, Compass, FileSearch, FileText, Globe, LayoutDashboard, LineChart, LogOut,
+  Activity, Banknote, ClipboardList, FileSearch, FileText, Globe, LayoutDashboard, LineChart, LogOut,
   MessageSquareText, Moon, Network, PanelLeftClose, PanelLeftOpen, ShieldAlert, Sparkles, Sun,
   TrendingUp, UploadCloud, Wallet,
 } from "lucide-react";
@@ -17,8 +17,7 @@ const NAV = [
   { to: "/agents", label: "Agent Network", icon: Network },
   { to: "/forecast", label: "Forecast Timeline", icon: TrendingUp },
   { to: "/operational", label: "Operational Highlights", icon: ClipboardList },
-  { to: "/market", label: "Market Intel — Operations", icon: Globe },
-  { to: "/market/strategy", label: "Market Intel — Strategy", icon: Compass },
+  { to: "/market", label: "Market & Business Intelligence", icon: Globe },
   { to: "/documents", label: "Document Explorer", icon: FileSearch },
   { to: "/audit", label: "Audit Findings", icon: ShieldAlert },
   { to: "/board-report", label: "Board Report", icon: FileText },
