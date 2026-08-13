@@ -1,0 +1,10 @@
+# Standalone worker pointed at the REAL Render database/Redis, not the local dev
+# ones in docker-compose.yml. Lets analysis actually run for the cloud-deployed app
+# without paying for a Render background worker. Run separately from the main stack:
+#   docker compose -f docker-compose.remote-worker.yml up -d --build
+# Uses .env.remote-worker (gitignored, not committed) for the real credentials.
+services:
+  remote-worker:
+    build: ./backend
+    command: celery -A app.services.worker.celery_app worker -l info --concurrency=2
+    env_file: .env.remote-worker
