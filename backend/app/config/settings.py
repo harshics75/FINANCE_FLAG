@@ -7,6 +7,8 @@ class Settings(BaseSettings):
 
     app_env: str = "development"
     secret_key: str = "dev-secret"
+    admin_seed_email: str = "admin@example.com"
+    admin_seed_password: str = "ChangeMe123!"
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
     cors_origins: str = "http://localhost:5173"

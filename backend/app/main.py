@@ -18,9 +18,9 @@ settings = get_settings()
 
 def seed_admin() -> None:
     with SessionLocal() as db:
-        if not db.query(User).filter(User.email == "admin@example.com").first():
-            db.add(User(email="admin@example.com", full_name="Administrator",
-                        hashed_password=hash_password("ChangeMe123!"), role=Role.admin))
+        if not db.query(User).filter(User.email == settings.admin_seed_email).first():
+            db.add(User(email=settings.admin_seed_email, full_name="Administrator",
+                        hashed_password=hash_password(settings.admin_seed_password), role=Role.admin))
             db.commit()
 
 
