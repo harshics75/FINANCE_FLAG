@@ -13,6 +13,10 @@ export default function Upload() {
 
   const upload = async (files: FileList | null) => {
     if (!files?.length) return;
+    if (!fiscalPeriod.trim()) {
+      setMessage("Enter a fiscal period before uploading — without it, extracted figures can't be saved as usable metrics.");
+      return;
+    }
     setMessage("");
     for (const file of Array.from(files)) {
       const form = new FormData();
@@ -36,7 +40,7 @@ export default function Upload() {
       <h1 className="text-xl font-semibold tracking-tight">Upload Financial Reports</h1>
       <div className="panel p-5 space-y-4">
         <label className="block text-sm">
-          <span className="text-mute text-xs uppercase tracking-widest">Fiscal period (e.g. FY2025-26)</span>
+          <span className="text-mute text-xs uppercase tracking-widest">Fiscal period (required, e.g. FY2025-26)</span>
           <input value={fiscalPeriod} onChange={(e) => setFiscalPeriod(e.target.value)} placeholder="FY2025-26"
             className="mt-1 w-full rounded bg-ink border border-panelEdge px-3 py-2 text-sm focus:border-amber outline-none" />
         </label>

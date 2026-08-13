@@ -21,6 +21,8 @@ async def upload_document(request: Request, file: UploadFile,
                           user: User = Depends(require_finance),
                           db: Session = Depends(get_db)):
     """Upload a PDF or Excel financial document. Processing runs asynchronously."""
+    if not fiscal_period.strip():
+        raise HTTPException(400, "fiscal_period is required — extracted figures can't be saved without it.")
     data = await validate_upload(file)
     if settings.storage_provider == "db":
         path, content = "db", data
