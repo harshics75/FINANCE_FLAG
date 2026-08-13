@@ -4,7 +4,7 @@ import enum
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import JSON, Enum, Float, ForeignKey, Integer, String, Text, DateTime
+from sqlalchemy import JSON, Enum, Float, ForeignKey, Integer, LargeBinary, String, Text, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.session import Base
@@ -56,6 +56,9 @@ class Document(Base):
     mime_type: Mapped[str] = mapped_column(String(128), default="")
     size_bytes: Mapped[int] = mapped_column(Integer, default=0)
     storage_path: Mapped[str] = mapped_column(String(1024))
+    # Only populated when STORAGE_PROVIDER=db (no shared disk between backend/worker
+    # and no object-storage account available) — file bytes live on the row itself.
+    content: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
     status: Mapped[DocStatus] = mapped_column(Enum(DocStatus), default=DocStatus.uploaded)
     is_scanned: Mapped[bool] = mapped_column(default=False)
     page_count: Mapped[int] = mapped_column(Integer, default=0)

@@ -5,12 +5,14 @@ from app.auth.dependencies import require_any, require_finance
 from app.database.session import get_db
 from app.models.models import Document, User
 from app.parser.validator import classify_doc_type, validate_upload
+from app.config.settings import get_settings
 from app.repositories.repositories import AuditLogRepository, DocumentRepository
 from app.schemas.schemas import ChunkOut, DocumentOut
 from app.services.document_service import save_upload
 from app.services.worker import process_document_task
 
 router = APIRouter()
+settings = get_settings()
 
 
 @router.post("/upload", response_model=DocumentOut)
@@ -20,12 +22,15 @@ async def upload_document(request: Request, file: UploadFile,
                           db: Session = Depends(get_db)):
     """Upload a PDF or Excel financial document. Processing runs asynchronously."""
     data = await validate_upload(file)
-    path = save_upload(data, file.filename or "upload.bin")
+    if settings.storage_provider == "db":
+        path, content = "db", data
+    else:
+        path, content = save_upload(data, file.filename or "upload.bin"), None
     doc = DocumentRepository(db).create(Document(
         owner_id=user.id, filename=file.filename or "upload",
         doc_type=classify_doc_type(file.filename or ""),
         fiscal_period=fiscal_period, mime_type=file.content_type or "",
-        size_bytes=len(data), storage_path=path,
+        size_bytes=len(data), storage_path=path, content=content,
     ))
     AuditLogRepository(db).log(user.id, "document.upload", "document", doc.id,
                                {"filename": doc.filename})

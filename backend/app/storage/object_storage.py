@@ -55,9 +55,23 @@ def save_bytes(data: bytes, filename: str) -> str:
 
 
 @contextmanager
-def local_path(storage_ref: str) -> Iterator[str]:
-    """Yield a real local filesystem path for a stored file — the file itself if
-    storage_provider is "local", or a temp download if it's an R2 key."""
+def local_path(storage_ref: str, name_hint: str = "", content: bytes | None = None) -> Iterator[str]:
+    """Yield a real local filesystem path for a stored file: the file itself if
+    storage_provider is "local"; a temp download if it's an R2 key; or the given
+    `content` bytes (storage_provider="db", already loaded from the DB row) written
+    to a temp file. `name_hint` (e.g. the original filename) is only used to pick the
+    right temp-file extension when content is passed directly."""
+    if content is not None:
+        suffix = os.path.splitext(name_hint)[1]
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+            tmp.write(content)
+            tmp_path = tmp.name
+        try:
+            yield tmp_path
+        finally:
+            os.unlink(tmp_path)
+        return
+
     if settings.storage_provider != "r2":
         yield storage_ref
         return

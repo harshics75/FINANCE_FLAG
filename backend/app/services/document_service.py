@@ -36,8 +36,8 @@ def process_document(document_id: str) -> None:
             line_items: dict[str, float] = {}
             sheet_count = 0
 
-            with local_path(doc.storage_path) as path:
-                if doc.storage_path.lower().endswith(".pdf"):
+            with local_path(doc.storage_path, name_hint=doc.filename, content=doc.content) as path:
+                if doc.filename.lower().endswith(".pdf"):
                     parsed = parse_pdf(path)
                     doc.is_scanned = parsed.is_scanned
                     doc.page_count = parsed.metadata.get("page_count", 0)
