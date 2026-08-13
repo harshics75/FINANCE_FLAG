@@ -4,8 +4,7 @@ import AppShell from "./layouts/AppShell";
 import Login from "./pages/Login";
 import ExecutiveOverview from "./pages/ExecutiveOverview";
 import FinancialPerformance from "./pages/FinancialPerformance";
-import CashFlowDashboard from "./pages/CashFlowDashboard";
-import WorkingCapital from "./pages/WorkingCapital";
+import FundFlow from "./pages/FundFlow";
 import AIInsights from "./pages/AIInsights";
 import AgentNetwork from "./pages/AgentNetwork";
 import ForecastTimeline from "./pages/ForecastTimeline";
@@ -31,8 +30,7 @@ export default function App() {
       <Route element={<Protected><AppShell /></Protected>}>
         <Route path="/" element={<ExecutiveOverview />} />
         <Route path="/performance" element={<FinancialPerformance />} />
-        <Route path="/cash-flow" element={<CashFlowDashboard />} />
-        <Route path="/working-capital" element={<WorkingCapital />} />
+        <Route path="/fund-flow" element={<FundFlow />} />
         <Route path="/insights" element={<AIInsights />} />
         <Route path="/agents" element={<AgentNetwork />} />
         <Route path="/forecast" element={<ForecastTimeline />} />

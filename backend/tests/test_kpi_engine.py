@@ -22,6 +22,8 @@ def test_compute_margins_and_working_capital():
     assert k["working_capital"] == 200.0
     assert k["current_ratio"] == 1.67
     assert "cash_conversion_cycle_days" in k
+    assert k["obligation_health_score"] == 100.0  # quick_ratio 1.27 caps at 100
+    assert k["collection_health_score"] == 52.2  # dso_days 73.0
 
 
 def test_revenue_growth_vs_prior():

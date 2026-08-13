@@ -30,7 +30,7 @@ export default function Login() {
           <div className="w-9 h-9 rounded-[11px] bg-grad grid place-items-center shadow-[0_0_24px_rgba(93,140,255,.45)]">
             <Activity className="text-ink" size={18} />
           </div>
-          <span className="text-lg font-semibold tracking-tight">FinSight</span>
+          <span className="text-lg font-semibold tracking-tight">Stardrive</span>
         </div>
 
         <div className="grad-border">

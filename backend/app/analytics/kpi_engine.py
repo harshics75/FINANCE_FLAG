@@ -101,6 +101,10 @@ def compute_kpis(items: dict[str, float], prior_items: dict[str, float] | None =
             m["liquidity_score"] = round(min(100.0, max(0.0, cr / 2.0 * 100)), 1)
         if (qr := _safe_div(ca - (g("inventory") or 0.0), cl)) is not None:
             m["quick_ratio"] = round(qr, 2)
+            # Disclosed heuristic, not an AI judgment: quick ratio of 1.0 = fully
+            # healthy (can cover current liabilities without relying on inventory),
+            # scaled linearly 0-100. Stricter near-term-obligation view than liquidity_score.
+            m["obligation_health_score"] = round(min(100.0, max(0.0, qr * 100)), 1)
     if (dr := _safe_div(g("total_debt"), g("equity"))) is not None:
         m["debt_to_equity"] = round(dr, 2)
     if (da := _safe_div(g("total_debt"), g("total_assets"))) is not None:
@@ -115,6 +119,9 @@ def compute_kpis(items: dict[str, float], prior_items: dict[str, float] | None =
     if revenue:
         if (dso := _safe_div(g("receivables"), revenue)) is not None:
             m["dso_days"] = round(dso * 365, 1)
+            # Disclosed heuristic, not an AI judgment: DSO of 30 days = fully healthy
+            # collection speed, 120+ days = fully unhealthy, scaled linearly 0-100.
+            m["collection_health_score"] = round(min(100.0, max(0.0, 100 - (m["dso_days"] - 30) / 90 * 100)), 1)
     if cogs:
         if (dpo := _safe_div(g("payables"), cogs)) is not None:
             m["dpo_days"] = round(dpo * 365, 1)

@@ -146,7 +146,7 @@ export default function Chat() {
                 <div className="w-6 h-6 rounded-lg bg-grad grid place-items-center shadow-[0_0_16px_rgba(93,140,255,.4)]">
                   <Bot size={13} className="text-ink" />
                 </div>
-                <span className="text-[13px] font-semibold">FinSight</span>
+                <span className="text-[13px] font-semibold">Stardrive</span>
                 <span className="text-[11px] text-faint">· grounded in your reports</span>
               </div>
               <div className="panel px-5 py-4 space-y-3">

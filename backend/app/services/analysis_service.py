@@ -95,7 +95,7 @@ def _materialize_dashboards(db, periods: dict, agents: dict) -> None:
         "profitability_assessment": analyst.get("profitability_assessment", ""),
         "confidence": analyst.get("confidence"),
     })
-    repo.save("cash_flow", {
+    repo.save("fund_flow", {
         "operating": _series(periods, "operating_cash_flow"),
         "investing": _series(periods, "investing_cash_flow"),
         "financing": _series(periods, "financing_cash_flow"),
@@ -103,22 +103,20 @@ def _materialize_dashboards(db, periods: dict, agents: dict) -> None:
         "current_ratio": _series(periods, "current_ratio"),
         "quick_ratio": _series(periods, "quick_ratio"),
         "debt_to_equity": _series(periods, "debt_to_equity"),
-        "liquidity_score": latest.get("liquidity_score"),
         "burn_rate_monthly": latest.get("burn_rate_monthly"),
         "runway_months": latest.get("runway_months"),
-        "risk_score": risks.get("risk_score"),
-        "summary": analyst.get("cash_flow_summary", ""),
-        "confidence": analyst.get("confidence"),
-    })
-    repo.save("working_capital", {
         "receivables": _series(periods, "receivables"),
         "payables": _series(periods, "payables"),
         "inventory": _series(periods, "inventory"),
         "dso": _series(periods, "dso_days"),
         "dpo": _series(periods, "dpo_days"),
         "ccc": _series(periods, "cash_conversion_cycle_days"),
+        "liquidity_health_score": latest.get("liquidity_score"),
+        "collection_health_score": latest.get("collection_health_score"),
+        "obligation_health_score": latest.get("obligation_health_score"),
         "risk_score": risks.get("risk_score"),
-        "summary": analyst.get("working_capital_summary", ""),
+        "cash_flow_summary": analyst.get("cash_flow_summary", ""),
+        "working_capital_summary": analyst.get("working_capital_summary", ""),
         "confidence": analyst.get("confidence"),
     })
     repo.save("insights", {

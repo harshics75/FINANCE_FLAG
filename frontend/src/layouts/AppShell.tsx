@@ -3,7 +3,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   Activity, Banknote, ClipboardList, FileSearch, FileText, Globe, LayoutDashboard, LineChart, LogOut,
   MessageSquareText, Moon, Network, PanelLeftClose, PanelLeftOpen, ShieldAlert, Sparkles, Sun,
-  TrendingUp, UploadCloud, Wallet,
+  TrendingUp, UploadCloud,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
@@ -11,8 +11,7 @@ import { useTheme } from "../contexts/ThemeContext";
 const NAV = [
   { to: "/", label: "Executive Overview", icon: LayoutDashboard },
   { to: "/performance", label: "Financial Performance", icon: LineChart },
-  { to: "/cash-flow", label: "Cash Flow", icon: Banknote },
-  { to: "/working-capital", label: "Working Capital", icon: Wallet },
+  { to: "/fund-flow", label: "Fund Flow", icon: Banknote },
   { to: "/insights", label: "AI Insights", icon: Sparkles },
   { to: "/agents", label: "Agent Network", icon: Network },
   { to: "/forecast", label: "Forecast Timeline", icon: TrendingUp },
@@ -41,7 +40,7 @@ export default function AppShell() {
           </div>
           {!collapsed && (
             <div className="min-w-0">
-              <div className="font-semibold tracking-tight leading-tight">FinSight</div>
+              <div className="font-semibold tracking-tight leading-tight">Stardrive</div>
               <div className="text-[10px] font-mono text-faint uppercase tracking-widest">AI workspace</div>
             </div>
           )}

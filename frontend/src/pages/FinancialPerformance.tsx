@@ -73,7 +73,7 @@ export default function FinancialPerformance() {
             <div className="w-8 h-8 rounded-lg bg-grad grid place-items-center shrink-0 shadow-[0_0_16px_rgba(93,140,255,.4)]">
               <Bot size={16} className="text-ink" />
             </div>
-            <span className="text-sm font-semibold">FinSight Analyst</span>
+            <span className="text-sm font-semibold">Stardrive Analyst</span>
             {confidence != null && <span className="text-[10px] font-mono text-faint ml-auto">{confidence}% confidence</span>}
           </div>
           {hasNarrative ? (
