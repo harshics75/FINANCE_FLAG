@@ -4,7 +4,9 @@ matching the Celery broker fallback used elsewhere). Populated by run_analysis()
 it streams through the LangGraph (see agents/graph.py), and read by the frontend's
 Agent Network page while a run is in flight."""
 import json
+import ssl
 import threading
+from urllib.parse import urlsplit, urlunsplit
 
 import redis
 
@@ -29,7 +31,16 @@ NODE_ORDER = [
 def _cache() -> redis.Redis:
     global _redis
     if _redis is None:
-        _redis = redis.from_url(settings.redis_url, decode_responses=True)
+        url = settings.redis_url
+        kwargs = {"decode_responses": True}
+        if url.startswith("rediss://"):
+            # Celery's own Redis transport needs ssl_cert_reqs embedded in the URL
+            # query string, but redis-py's from_url() parses that same query value
+            # differently and rejects it — strip it here and pass it as a real kwarg.
+            parts = urlsplit(url)
+            url = urlunsplit(parts._replace(query=""))
+            kwargs["ssl_cert_reqs"] = ssl.CERT_REQUIRED
+        _redis = redis.from_url(url, **kwargs)
     return _redis
 
 
