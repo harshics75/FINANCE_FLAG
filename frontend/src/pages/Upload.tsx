@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Trash2, UploadCloud } from "lucide-react";
 import api from "../services/api";
@@ -8,28 +8,40 @@ export default function Upload() {
   const [fiscalPeriod, setFiscalPeriod] = useState("");
   const [progress, setProgress] = useState<number | null>(null);
   const [message, setMessage] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isError, setIsError] = useState(false);
   const qc = useQueryClient();
   const { data: docs } = useDocuments();
 
   const upload = async (files: FileList | null) => {
-    if (!files?.length) return;
+    console.log("[upload] triggered, files:", files?.length, "fiscalPeriod:", JSON.stringify(fiscalPeriod));
+    if (!files?.length) {
+      console.log("[upload] no files, aborting");
+      return;
+    }
     if (!fiscalPeriod.trim()) {
+      setIsError(true);
       setMessage("Enter a fiscal period before uploading — without it, extracted figures can't be saved as usable metrics.");
       return;
     }
+    setIsError(false);
     setMessage("");
     for (const file of Array.from(files)) {
       const form = new FormData();
       form.append("file", file);
       form.append("fiscal_period", fiscalPeriod);
       try {
-        await api.post("/documents/upload", form, {
+        console.log("[upload] POSTing", file.name, file.size, "bytes");
+        const res = await api.post("/documents/upload", form, {
           onUploadProgress: (e) => setProgress(e.total ? Math.round((e.loaded / e.total) * 100) : null),
         });
+        console.log("[upload] success", res.status, res.data);
+        setIsError(false);
         setMessage(`Uploaded ${file.name} — processing started.`);
       } catch (err: any) {
-        setMessage(err?.response?.data?.detail ?? `Upload failed for ${file.name}.`);
+        console.error("[upload] failed", err);
+        setIsError(true);
+        const detail = err?.response?.data?.detail ?? err?.message ?? "unknown error";
+        setMessage(`Upload failed for ${file.name}: ${detail} (${err?.response?.status ?? "no response"})`);
       }
     }
     setProgress(null);
@@ -55,14 +67,13 @@ export default function Upload() {
           <input value={fiscalPeriod} onChange={(e) => setFiscalPeriod(e.target.value)} placeholder="FY2025-26"
             className="mt-1 w-full rounded bg-ink border border-panelEdge px-3 py-2 text-sm focus:border-amber outline-none" />
         </label>
-        <div className="border-2 border-dashed border-panelEdge rounded-lg p-10 text-center cursor-pointer hover:border-amber"
-          onClick={() => fileInputRef.current?.click()}
+        <div className="relative border-2 border-dashed border-panelEdge rounded-lg p-10 text-center hover:border-amber"
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => { e.preventDefault(); upload(e.dataTransfer.files); }}>
           <UploadCloud className="mx-auto text-mute mb-2" size={28} />
           <span className="text-sm text-mute">Drop PDF or Excel files here, or click to browse (max 50 MB)</span>
-          <input ref={fileInputRef} type="file" multiple accept=".pdf,.xlsx,.xls"
-            style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }}
+          <input type="file" multiple accept=".pdf,.xlsx,.xls"
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             onChange={(e) => { upload(e.target.files); e.target.value = ""; }} />
         </div>
         {progress !== null && (
@@ -70,7 +81,7 @@ export default function Upload() {
             <div className="h-full bg-amber transition-all" style={{ width: `${progress}%` }} />
           </div>
         )}
-        {message && <p className="text-sm text-mute">{message}</p>}
+        {message && <p className={`text-sm ${isError ? "text-down" : "text-mute"}`}>{message}</p>}
       </div>
       <div className="panel p-4">
         <h3 className="text-xs uppercase tracking-widest text-mute mb-3">Recent uploads</h3>
