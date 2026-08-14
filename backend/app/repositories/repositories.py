@@ -1,9 +1,9 @@
 """Thin data-access layer so services never touch the ORM session directly."""
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.models.models import (AnalysisResult, AuditLog, ChatHistory, Chunk,
-                               DashboardData, Document, FinancialMetric, User)
+                               DashboardData, Document, Embedding, FinancialMetric, User)
 
 
 class UserRepository:
@@ -43,6 +43,14 @@ class DocumentRepository:
 
     def add_chunks(self, chunks: list[Chunk]) -> None:
         self.db.add_all(chunks)
+
+    def delete(self, doc: Document) -> None:
+        chunk_ids = [c.id for c in doc.chunks]
+        if chunk_ids:
+            self.db.execute(delete(Embedding).where(Embedding.chunk_id.in_(chunk_ids)))
+        self.db.execute(delete(FinancialMetric).where(FinancialMetric.document_id == doc.id))
+        self.db.delete(doc)  # cascades to Chunks via the ORM relationship
+        self.db.commit()
         self.db.commit()
 
 

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { UploadCloud } from "lucide-react";
+import { Trash2, UploadCloud } from "lucide-react";
 import api from "../services/api";
 import { useDocuments } from "../hooks/useDashboard";
 
@@ -35,6 +35,16 @@ export default function Upload() {
     qc.invalidateQueries({ queryKey: ["documents"] });
   };
 
+  const remove = async (id: string, filename: string) => {
+    if (!confirm(`Delete "${filename}"? This also removes its extracted chunks and metrics.`)) return;
+    try {
+      await api.delete(`/documents/${id}`);
+      qc.invalidateQueries({ queryKey: ["documents"] });
+    } catch {
+      setMessage(`Failed to delete ${filename}.`);
+    }
+  };
+
   return (
     <div className="space-y-4 max-w-2xl">
       <h1 className="text-xl font-semibold tracking-tight">Upload Financial Reports</h1>
@@ -63,9 +73,15 @@ export default function Upload() {
         <h3 className="text-xs uppercase tracking-widest text-mute mb-3">Recent uploads</h3>
         <ul className="space-y-1.5 text-sm">
           {(docs ?? []).slice(0, 8).map((d) => (
-            <li key={d.id} className="flex justify-between">
+            <li key={d.id} className="flex items-center justify-between gap-2">
               <span className="truncate">{d.filename}</span>
-              <span className="font-mono text-[11px] text-mute uppercase">{d.status}</span>
+              <span className="flex items-center gap-2 shrink-0">
+                <span className="font-mono text-[11px] text-mute uppercase">{d.status}</span>
+                <button onClick={() => remove(d.id, d.filename)} aria-label={`Delete ${d.filename}`}
+                  className="text-mute hover:text-down transition-colors p-1">
+                  <Trash2 size={13} />
+                </button>
+              </span>
             </li>
           ))}
         </ul>

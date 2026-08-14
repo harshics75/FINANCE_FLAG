@@ -65,3 +65,14 @@ def get_chunks(document_id: str, db: Session = Depends(get_db)):
     if not doc:
         raise HTTPException(404, "Document not found")
     return sorted(doc.chunks, key=lambda c: c.chunk_index)[:200]
+
+
+@router.delete("/{document_id}", status_code=204)
+def delete_document(document_id: str, user: User = Depends(require_finance), db: Session = Depends(get_db)):
+    repo = DocumentRepository(db)
+    doc = repo.get(document_id)
+    if not doc:
+        raise HTTPException(404, "Document not found")
+    repo.delete(doc)
+    AuditLogRepository(db).log(user.id, "document.delete", "document", document_id,
+                               {"filename": doc.filename})
