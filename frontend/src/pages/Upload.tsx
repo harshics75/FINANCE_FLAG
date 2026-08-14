@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Trash2, UploadCloud } from "lucide-react";
 import api from "../services/api";
@@ -8,6 +8,7 @@ export default function Upload() {
   const [fiscalPeriod, setFiscalPeriod] = useState("");
   const [progress, setProgress] = useState<number | null>(null);
   const [message, setMessage] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const qc = useQueryClient();
   const { data: docs } = useDocuments();
 
@@ -54,14 +55,16 @@ export default function Upload() {
           <input value={fiscalPeriod} onChange={(e) => setFiscalPeriod(e.target.value)} placeholder="FY2025-26"
             className="mt-1 w-full rounded bg-ink border border-panelEdge px-3 py-2 text-sm focus:border-amber outline-none" />
         </label>
-        <label className="block border-2 border-dashed border-panelEdge rounded-lg p-10 text-center cursor-pointer hover:border-amber"
+        <div className="border-2 border-dashed border-panelEdge rounded-lg p-10 text-center cursor-pointer hover:border-amber"
+          onClick={() => fileInputRef.current?.click()}
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => { e.preventDefault(); upload(e.dataTransfer.files); }}>
           <UploadCloud className="mx-auto text-mute mb-2" size={28} />
           <span className="text-sm text-mute">Drop PDF or Excel files here, or click to browse (max 50 MB)</span>
-          <input type="file" multiple accept=".pdf,.xlsx,.xls" className="hidden"
-            onChange={(e) => upload(e.target.files)} />
-        </label>
+          <input ref={fileInputRef} type="file" multiple accept=".pdf,.xlsx,.xls"
+            style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }}
+            onChange={(e) => { upload(e.target.files); e.target.value = ""; }} />
+        </div>
         {progress !== null && (
           <div className="h-1.5 bg-panelEdge rounded overflow-hidden">
             <div className="h-full bg-amber transition-all" style={{ width: `${progress}%` }} />
