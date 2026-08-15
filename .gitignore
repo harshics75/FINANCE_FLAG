@@ -32,3 +32,4 @@ build/
 # Local runtime data
 *.db
 backend/uploads/
+backend/benchmark_output/
