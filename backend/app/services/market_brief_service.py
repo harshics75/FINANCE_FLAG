@@ -90,7 +90,8 @@ def _generate(db: Session) -> list[dict]:
     )
     try:
         parsed = run_json(T.MARKET_SYSTEM_BASE,
-                          T.MARKET_EXECUTIVE_BRIEF.format(count=len(signals), signals=formatted))
+                          T.MARKET_EXECUTIVE_BRIEF.format(count=len(signals), signals=formatted),
+                          provider="nvidia")
         items = parsed.get("brief") if isinstance(parsed, dict) else None
         if not isinstance(items, list) or not items:
             raise ValueError("LLM returned no usable brief items")

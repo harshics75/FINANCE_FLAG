@@ -11,19 +11,30 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
-def get_llm(temperature: float = 0.1) -> BaseChatModel:
-    if settings.llm_provider == "ollama":
+def get_llm(temperature: float = 0.1, provider: str | None = None) -> BaseChatModel:
+    """`provider` overrides settings.llm_provider for this one call — used where a
+    feature deliberately wants a different model than the app-wide default (e.g.
+    Market Intelligence on NVIDIA NIM instead of the default Groq)."""
+    provider = provider or settings.llm_provider
+    if provider == "ollama":
         return ChatOpenAI(
             base_url=f"{settings.ollama_base_url.rstrip('/')}/v1",
             api_key="ollama",
             model=settings.ollama_chat_model,
             temperature=temperature,
         )
-    if settings.llm_provider == "groq":
+    if provider == "groq":
         return ChatOpenAI(
             base_url=settings.groq_base_url,
             api_key=settings.groq_api_key,
             model=settings.groq_chat_model,
+            temperature=temperature,
+        )
+    if provider == "nvidia":
+        return ChatOpenAI(
+            base_url=settings.nvidia_base_url,
+            api_key=settings.nvidia_api_key,
+            model=settings.nvidia_chat_model,
             temperature=temperature,
         )
     return AzureChatOpenAI(
@@ -52,8 +63,8 @@ def _extract_json_object(text: str) -> str | None:
     return None
 
 
-def run_json(system: str, user: str, temperature: float = 0.1) -> dict:
-    llm = get_llm(temperature)
+def run_json(system: str, user: str, temperature: float = 0.1, provider: str | None = None) -> dict:
+    llm = get_llm(temperature, provider)
     resp = None
     for attempt in range(2):
         resp = llm.invoke([("system", system), ("user", user)])

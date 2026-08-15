@@ -45,6 +45,14 @@ class Settings(BaseSettings):
     groq_chat_model: str = "llama-3.3-70b-versatile"
     local_embedding_model: str = "BAAI/bge-small-en-v1.5"
 
+    # NVIDIA NIM (free tier) — used specifically for Market Intelligence's one
+    # LLM call, not the main analysis pipeline or chat (see market_brief_service.py
+    # comment: low-volume, latency-tolerant, benefits from deeper reasoning — the
+    # opposite profile from the pipeline/chat, which stay on Groq for speed).
+    nvidia_api_key: str = ""
+    nvidia_base_url: str = "https://integrate.api.nvidia.com/v1"
+    nvidia_chat_model: str = "nvidia/nemotron-3-ultra-550b-a55b"
+
     vector_store: str = "faiss"  # azure_search | faiss
     azure_search_endpoint: str = ""
     azure_search_api_key: str = ""
